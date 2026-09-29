@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import PageContainer from '@/components/layout/PageContainer';
-import Card from '@/components/ui/Card';
-import Badge from '@/components/ui/Badge';
-import Button from '@/components/ui/Button';
+import { PageContainer } from '@/components/layout/PageContainer';
+import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { ROUTES } from '@/constants/routes';
 import { Shield, ArrowLeft } from 'lucide-react';
 import { userApi, type RoleReference } from '../api/userApi';
@@ -67,7 +67,7 @@ export const RolesPage: React.FC = () => {
   return (
     <PageContainer
       title="System Role Reference"
-      description="Reference directory of active system roles, descriptions, and functional scope."
+      subtitle="Reference directory of active system roles, descriptions, and functional scope."
       actions={
         <Button variant="secondary" leftIcon={<ArrowLeft size={16} />} onClick={() => navigate(ROUTES.USERS)}>
           Back to User Access
@@ -104,7 +104,7 @@ export const RolesPage: React.FC = () => {
               {role.permissions && role.permissions.length > 0 && (
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '4px' }}>
                   {role.permissions.map((p) => (
-                    <Badge key={p} variant="default">
+                    <Badge key={p} variant="neutral">
                       {p}
                     </Badge>
                   ))}

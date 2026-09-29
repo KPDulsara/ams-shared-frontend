@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ROUTES } from '@/constants/routes';
-import Card from '@/components/ui/Card';
-import Input from '@/components/ui/Input';
-import Button from '@/components/ui/Button';
-import Alert from '@/components/feedback/Alert';
+import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { Alert } from '@/components/feedback/Alert';
 import { Building2, UserPlus } from 'lucide-react';
 import { authApi } from '@/features/auth/api/authApi';
 
@@ -108,15 +108,15 @@ export const RegisterPage: React.FC = () => {
         </div>
 
         <Card>
-          {error && <Alert variant="error">{error}</Alert>}
-          {successMessage && <Alert variant="success">{successMessage}</Alert>}
+          {error && <Alert type="error" message={error} autoDismiss={false} />}
+          {successMessage && <Alert type="success" message={successMessage} autoDismiss={false} />}
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <Input
                 label="First Name"
                 type="text"
-                isRequired
+                required
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 placeholder="Jane"
@@ -124,7 +124,7 @@ export const RegisterPage: React.FC = () => {
               <Input
                 label="Last Name"
                 type="text"
-                isRequired
+                required
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="Doe"
@@ -134,7 +134,7 @@ export const RegisterPage: React.FC = () => {
             <Input
               label="Corporate Email"
               type="email"
-              isRequired
+              required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="jane.doe@ams.internal"
@@ -181,7 +181,7 @@ export const RegisterPage: React.FC = () => {
             <Input
               label="Password"
               type="password"
-              isRequired
+              required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
@@ -190,7 +190,7 @@ export const RegisterPage: React.FC = () => {
             <Input
               label="Confirm Password"
               type="password"
-              isRequired
+              required
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="••••••••"
@@ -199,7 +199,7 @@ export const RegisterPage: React.FC = () => {
             <Button
               type="submit"
               variant="primary"
-              fullWidth
+              style={{ width: '100%' }}
               isLoading={loading}
               leftIcon={<UserPlus size={16} />}
             >

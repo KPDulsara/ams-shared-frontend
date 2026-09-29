@@ -11,6 +11,10 @@ export const tokenStorage = {
   removeToken: (): void => {
     localStorage.removeItem(TOKEN_KEY);
   },
+  clearTokens: (): void => {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(ACTIVE_USER_ID_KEY);
+  },
   getActiveUserId: (): string | null => {
     return localStorage.getItem(ACTIVE_USER_ID_KEY);
   },

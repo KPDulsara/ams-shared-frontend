@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAppDispatch } from '@/app/store/hooks';
 import { setMustChangePassword } from '@/features/auth/store/authSlice';
 import { ROUTES } from '@/constants/routes';
-import Card from '@/components/ui/Card';
-import Input from '@/components/ui/Input';
-import Button from '@/components/ui/Button';
-import Alert from '@/components/feedback/Alert';
+import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { Alert } from '@/components/feedback/Alert';
 import { ShieldAlert, KeyRound } from 'lucide-react';
 import { authApi } from '../api/authApi';
 
@@ -94,7 +94,7 @@ export const ForceChangePasswordPage: React.FC = () => {
         <Card>
           {error && (
             <div style={{ marginBottom: '16px' }}>
-              <Alert variant="error">{error}</Alert>
+              <Alert type="error" message={error} autoDismiss={false} />
             </div>
           )}
 
@@ -102,7 +102,7 @@ export const ForceChangePasswordPage: React.FC = () => {
             <Input
               label="New Password"
               type="password"
-              isRequired
+              required
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder="At least 8 characters"
@@ -111,7 +111,7 @@ export const ForceChangePasswordPage: React.FC = () => {
             <Input
               label="Confirm New Password"
               type="password"
-              isRequired
+              required
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="••••••••"
@@ -120,7 +120,7 @@ export const ForceChangePasswordPage: React.FC = () => {
             <Button
               type="submit"
               variant="primary"
-              fullWidth
+              style={{ width: '100%' }}
               isLoading={loading}
               leftIcon={<KeyRound size={16} />}
             >

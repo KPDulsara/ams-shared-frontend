@@ -1,6 +1,6 @@
 import React from 'react';
 import { Badge } from '@/components/ui/Badge';
-import { BookingStatus } from '../types/facility.types';
+import type { BookingStatus } from '../types/facility.types';
 
 export interface BookingStatusBadgeProps {
   status: BookingStatus;

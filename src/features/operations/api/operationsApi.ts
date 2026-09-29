@@ -1,5 +1,5 @@
 import { apiClient } from '@/services/api/client';
-import {
+import type {
   CreateMaintenanceRequestDto,
   CreateWorkOrderDTO,
   MaintenanceFilterParams,

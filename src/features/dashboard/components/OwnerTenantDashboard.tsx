@@ -1,9 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import PageContainer from '@/components/layout/PageContainer';
-import Card from '@/components/ui/Card';
-import Badge from '@/components/ui/Badge';
-import Button from '@/components/ui/Button';
+import { PageContainer } from '@/components/layout/PageContainer';
+import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { ROUTES } from '@/constants/routes';
 import { UserCheck, Users, Building, ShieldCheck } from 'lucide-react';
 import type { User as UserType } from '@/features/auth/store/authSlice';
@@ -18,7 +18,7 @@ export const OwnerTenantDashboard: React.FC<OwnerTenantDashboardProps> = ({ user
   return (
     <PageContainer
       title="Owner & Tenant Management Portal"
-      description={`Welcome back, ${user?.name || 'Property Owner/Tenant'}. Overview of property ownership records and resident directory.`}
+      subtitle={`Welcome back, ${user?.name || 'Property Owner/Tenant'}. Overview of property ownership records and resident directory.`}
     >
       {/* Metric Cards Grid */}
       <div

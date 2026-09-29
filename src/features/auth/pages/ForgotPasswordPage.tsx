@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/constants/routes';
-import Card from '@/components/ui/Card';
-import Input from '@/components/ui/Input';
-import Button from '@/components/ui/Button';
-import Alert from '@/components/feedback/Alert';
+import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { Alert } from '@/components/feedback/Alert';
 import { Building2, KeyRound, ArrowLeft, CheckCircle2 } from 'lucide-react';
 
 export const ForgotPasswordPage: React.FC = () => {
@@ -81,21 +81,23 @@ export const ForgotPasswordPage: React.FC = () => {
         <Card>
           {error && (
             <div style={{ marginBottom: '16px' }}>
-              <Alert variant="error">{error}</Alert>
+              <Alert type="error" message={error} autoDismiss={false} />
             </div>
           )}
 
           {submitted ? (
             <div style={{ textAlign: 'center', padding: '8px 0' }}>
               <div style={{ marginBottom: '16px' }}>
-                <Alert variant="success" icon={<CheckCircle2 size={18} />}>
-                  Instructions sent! If an account exists for <strong>{email}</strong>, password reset instructions have been dispatched.
-                </Alert>
+                <Alert
+                  type="success"
+                  message={`Instructions sent! If an account exists for ${email}, password reset instructions have been dispatched.`}
+                  autoDismiss={false}
+                />
               </div>
 
               <Button
                 variant="secondary"
-                fullWidth
+                style={{ width: '100%' }}
                 leftIcon={<ArrowLeft size={16} />}
                 onClick={() => navigate(ROUTES.LOGIN)}
               >
@@ -107,7 +109,7 @@ export const ForgotPasswordPage: React.FC = () => {
               <Input
                 label="Corporate Email"
                 type="email"
-                isRequired
+                required
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
@@ -119,7 +121,7 @@ export const ForgotPasswordPage: React.FC = () => {
               <Button
                 type="submit"
                 variant="primary"
-                fullWidth
+                style={{ width: '100%' }}
                 isLoading={loading}
                 leftIcon={<KeyRound size={16} />}
               >

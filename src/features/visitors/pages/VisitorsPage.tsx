@@ -9,7 +9,7 @@ import { LoadingState } from '@/components/feedback/LoadingState';
 import { VisitorTable } from '../components/VisitorTable';
 import { VisitorFormModal } from '../components/VisitorFormModal';
 import { VisitorPassCard } from '../components/VisitorPassCard';
-import { Visitor } from '../types/visitor.types';
+import type { Visitor } from '../types/visitor.types';
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks';
 import { useIsMobile, MobileFilterTabs } from '@/components/mobile';
 import { ROUTES } from '@/constants/routes';

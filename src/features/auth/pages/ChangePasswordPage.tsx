@@ -1,135 +1,167 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import PageContainer from '@/components/layout/PageContainer';
-import Card from '@/components/ui/Card';
-import Input from '@/components/ui/Input';
-import Button from '@/components/ui/Button';
-import Alert from '@/components/feedback/Alert';
+import { ArrowLeft, KeyRound } from 'lucide-react';
+import { PageContainer } from '@/components/layout/PageContainer';
+import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { Alert } from '@/components/feedback/Alert';
 import { ROUTES } from '@/constants/routes';
-import { KeyRound, ArrowLeft, CheckCircle2 } from 'lucide-react';
-import { authApi } from '../api/authApi';
+import { useCurrentAccess } from '@/features/users/hooks/useCurrentAccess';
+import { hasErrors, type FieldErrors } from '@/features/users/validation/userValidation';
+import { profileApi } from '../api/profileApi';
+import { validateChangePassword, type ChangePasswordValues } from '../validation/passwordValidation';
+import { PasswordRequirements } from '../components/PasswordRequirements';
+
+const EMPTY_VALUES: ChangePasswordValues = { currentPassword: '', newPassword: '', confirmPassword: '' };
 
 export const ChangePasswordPage: React.FC = () => {
   const navigate = useNavigate();
+  const { userId } = useCurrentAccess();
 
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [values, setValues] = useState<ChangePasswordValues>(EMPTY_VALUES);
+  const [errors, setErrors] = useState<FieldErrors<ChangePasswordValues>>({});
+  const [showPasswords, setShowPasswords] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  const setField = (field: keyof ChangePasswordValues, value: string) => {
+    setValues((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
+    setIsSuccess(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
+    setSubmitError(null);
+    setIsSuccess(false);
 
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      setError('Please fill in all password fields.');
-      return;
-    }
+    const validation = validateChangePassword(values);
+    setErrors(validation);
+    if (hasErrors(validation)) return;
 
-    if (newPassword.length < 8) {
-      setError('New password must be at least 8 characters long.');
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      setError('New Password and Confirm New Password do not match.');
-      return;
-    }
-
-    if (newPassword === currentPassword) {
-      setError('New password cannot be identical to the current password.');
-      return;
-    }
-
-    setLoading(true);
-
+    setIsSubmitting(true);
     try {
-      const response = await authApi.changePassword({ currentPassword, newPassword });
-      setLoading(false);
-      setSuccess(response.message || 'Password changed successfully!');
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-    } catch (_err: unknown) {
-      // Fallback for dev / mock environment
-      setTimeout(() => {
-        setLoading(false);
-        setSuccess('Password updated successfully!');
-        setCurrentPassword('');
-        setNewPassword('');
-        setConfirmPassword('');
-      }, 500);
+      await profileApi.changePassword(userId, {
+        currentPassword: values.currentPassword,
+        newPassword: values.newPassword,
+      });
+      setValues(EMPTY_VALUES);
+      setIsSuccess(true);
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Your password could not be changed.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  const inputType = showPasswords ? 'text' : 'password';
 
   return (
     <PageContainer
       title="Change Password"
-      description="Update your security credentials and personal authentication phrase."
+      subtitle="Choose a strong password that you do not use for other services."
+      maxWidth="760px"
       actions={
-        <Button variant="secondary" leftIcon={<ArrowLeft size={16} />} onClick={() => navigate(ROUTES.PROFILE)}>
+        <Button variant="outline" leftIcon={<ArrowLeft size={16} />} onClick={() => navigate(ROUTES.PROFILE)}>
           Back to Profile
         </Button>
       }
     >
-      <div style={{ maxWidth: '540px' }}>
-        <Card>
-          {error && (
-            <div style={{ marginBottom: '16px' }}>
-              <Alert variant="error">{error}</Alert>
-            </div>
-          )}
-
-          {success && (
-            <div style={{ marginBottom: '16px' }}>
-              <Alert variant="success" icon={<CheckCircle2 size={18} />}>
-                {success}
-              </Alert>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <Input
-              label="Current Password"
-              type="password"
-              isRequired
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              placeholder="••••••••"
+      <Card padding="lg">
+        <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '1.125rem' }}>
+          {isSuccess && (
+            <Alert
+              type="success"
+              title="Password changed"
+              message="Your password was updated. Use the new password the next time you sign in."
+              autoDismiss={false}
             />
+          )}
+          {hasErrors(errors) && (
+            <Alert
+              key={Object.keys(errors).join()}
+              type="error"
+              title="Please fix the highlighted fields"
+              message="Your password was not changed."
+              autoDismiss={false}
+              showDismissButton={false}
+            />
+          )}
+          {submitError && (
+            <Alert key={submitError} type="error" title="Password not changed" message={submitError} autoDismiss={false} />
+          )}
 
+          <Input
+            label="Current Password"
+            type={inputType}
+            required
+            value={values.currentPassword}
+            onChange={(e) => setField('currentPassword', e.target.value)}
+            error={errors.currentPassword}
+            aria-invalid={Boolean(errors.currentPassword)}
+            disabled={isSubmitting}
+            autoComplete="current-password"
+          />
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
             <Input
               label="New Password"
-              type="password"
-              isRequired
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="At least 8 characters"
+              type={inputType}
+              required
+              value={values.newPassword}
+              onChange={(e) => setField('newPassword', e.target.value)}
+              error={errors.newPassword}
+              aria-invalid={Boolean(errors.newPassword)}
+              aria-describedby="password-requirements"
+              disabled={isSubmitting}
+              autoComplete="new-password"
             />
+            <PasswordRequirements id="password-requirements" password={values.newPassword} />
+          </div>
 
-            <Input
-              label="Confirm New Password"
-              type="password"
-              isRequired
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="••••••••"
+          <Input
+            label="Confirm New Password"
+            type={inputType}
+            required
+            value={values.confirmPassword}
+            onChange={(e) => setField('confirmPassword', e.target.value)}
+            error={errors.confirmPassword}
+            aria-invalid={Boolean(errors.confirmPassword)}
+            disabled={isSubmitting}
+            autoComplete="new-password"
+          />
+
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={showPasswords}
+              onChange={(e) => setShowPasswords(e.target.checked)}
+              style={{ accentColor: 'var(--color-accent)' }}
             />
+            Show passwords
+          </label>
 
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>
-              <Button type="button" variant="secondary" onClick={() => navigate(ROUTES.PROFILE)}>
-                Cancel
-              </Button>
-              <Button type="submit" variant="primary" isLoading={loading} leftIcon={<KeyRound size={16} />}>
-                Update Password
-              </Button>
-            </div>
-          </form>
-        </Card>
-      </div>
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              justifyContent: 'flex-end',
+              gap: '0.75rem',
+              paddingTop: '1rem',
+              borderTop: '1px solid var(--color-border-subtle)',
+            }}
+          >
+            <Button type="button" variant="outline" onClick={() => navigate(ROUTES.PROFILE)} disabled={isSubmitting}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="primary" isLoading={isSubmitting} leftIcon={<KeyRound size={16} />}>
+              Change Password
+            </Button>
+          </div>
+        </form>
+      </Card>
     </PageContainer>
   );
 };

@@ -1,8 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import PageContainer from '@/components/layout/PageContainer';
-import Card from '@/components/ui/Card';
-import Button from '@/components/ui/Button';
+import { PageContainer } from '@/components/layout/PageContainer';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
 import { ROUTES } from '@/constants/routes';
 import { ShieldAlert, ArrowLeft, LayoutDashboard } from 'lucide-react';
 
@@ -10,7 +10,7 @@ export const AccessDeniedPage: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <PageContainer>
+    <PageContainer title="Access Denied">
       <div
         style={{
           display: 'flex',

@@ -1,9 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import PageContainer from '@/components/layout/PageContainer';
-import Card from '@/components/ui/Card';
-import Badge from '@/components/ui/Badge';
-import Button from '@/components/ui/Button';
+import { PageContainer } from '@/components/layout/PageContainer';
+import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { ROUTES } from '@/constants/routes';
 import { Users, User, Building, CheckCircle2 } from 'lucide-react';
 import type { User as UserType } from '@/features/auth/store/authSlice';
@@ -18,7 +18,7 @@ export const BasicDashboard: React.FC<BasicDashboardProps> = ({ user }) => {
   return (
     <PageContainer
       title="Resident Community Portal"
-      description={`Welcome back, ${user?.name || 'Resident'}. Access active community directories and account preferences.`}
+      subtitle={`Welcome back, ${user?.name || 'Resident'}. Access active community directories and account preferences.`}
     >
       {/* Metric Cards Grid */}
       <div

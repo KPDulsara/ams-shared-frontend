@@ -1,5 +1,4 @@
 export const ROUTES = {
-export const ROUTES = {
   // Base & Auth Routes (loginscreen)
   HOME: '/',
   LOGIN: '/login',
@@ -9,6 +8,8 @@ export const ROUTES = {
   FORCE_CHANGE_PASSWORD: '/auth/force-change-password',
   DASHBOARD: '/dashboard',
   PROFILE: '/profile',
+  PROFILE_EDIT: '/profile/edit',
+  PROFILE_EMAIL_CHANGE: '/profile/email',
   PROFILE_CHANGE_PASSWORD: '/profile/change-password',
   UNAUTHORIZED: '/unauthorized',
   NOT_FOUND: '*',
@@ -20,7 +21,11 @@ export const ROUTES = {
   USERS: '/admin/users',
   USER_DETAIL: '/admin/users/:userId',
   USER_CREATE: '/admin/users/create',
+  USER_EDIT: '/admin/users/:userId/edit',
   ROLES: '/admin/roles',
+  RELATIONSHIPS: '/relationships',
+  RELATIONSHIP_REQUEST: '/relationships/request',
+  RELATIONSHIP_REVIEW: '/admin/relationship-requests',
 
   // Community & Property Features (main)
   FACILITIES: '/facilities',
@@ -38,3 +43,9 @@ export const ROUTES = {
 
 export type RouteKey = keyof typeof ROUTES;
 export type AppRoute = typeof ROUTES[keyof typeof ROUTES];
+
+export const buildUserDetailPath = (userId: string): string =>
+  ROUTES.USER_DETAIL.replace(':userId', encodeURIComponent(userId));
+
+export const buildUserEditPath = (userId: string): string =>
+  ROUTES.USER_EDIT.replace(':userId', encodeURIComponent(userId));
