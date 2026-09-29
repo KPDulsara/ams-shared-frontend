@@ -44,7 +44,7 @@ const adminOnly = (element: React.ReactNode) => (
 /** Full-screen pages rendered outside the application layout (no sidebar/header). */
 export const publicRoutes: RouteItem[] = [
   { path: ROUTES.LOGIN, element: <LoginPage />, title: 'Sign In' },
-  { path: ROUTES.REGISTER, element: <RegisterPage />, title: 'Register' },
+  { path: ROUTES.REGISTER, element: <Navigate to={ROUTES.LOGIN} replace />, title: 'Register' },
   { path: ROUTES.FORGOT_PASSWORD, element: <ForgotPasswordPage />, title: 'Forgot Password' },
   { path: ROUTES.RESET_PASSWORD, element: <ResetPasswordPage />, title: 'Reset Password' },
   { path: ROUTES.FORCE_CHANGE_PASSWORD, element: <ForceChangePasswordPage />, title: 'Change Password' },

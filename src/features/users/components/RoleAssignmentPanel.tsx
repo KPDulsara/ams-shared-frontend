@@ -138,7 +138,7 @@ export const RoleAssignmentPanel: React.FC<RoleAssignmentPanelProps> = ({ user, 
 
         <div style={{ borderTop: '1px solid var(--color-border-subtle)', paddingTop: '1.25rem' }}>
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: '0.75rem' }}>
-            <div style={{ flex: '1 1 240px' }}>
+            <div style={{ flex: '1 1 240px', position: 'relative', zIndex: 20 }}>
               <Select
                 label="Assign a role"
                 options={availableRoles.map((role) => ({ value: role, label: getRoleLabel(role) }))}

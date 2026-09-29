@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams, useLocation, Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks';
-import { setCredentials } from '@/features/auth/store/authSlice';
+import { setCredentials, type User } from '@/features/auth/store/authSlice';
 import { ROUTES } from '@/constants/routes';
 import type { UserRole } from '@/constants/roles';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/feedback/Alert';
-import { Building2, LogIn, AlertTriangle, UserPlus } from 'lucide-react';
+import { Building2, LogIn, Shield, KeyRound } from 'lucide-react';
 
 import { authApi } from '@/features/auth/api/authApi';
+import { userMockStore } from '@/features/users/api/userMockStore';
 
 export const LoginPage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -26,7 +27,7 @@ export const LoginPage: React.FC = () => {
     reduxAuthError?.includes('expired');
 
   const [email, setEmail] = useState('admin@ams.internal');
-  const [password, setPassword] = useState('password123');
+  const [password, setPassword] = useState('admin123');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -37,18 +38,19 @@ export const LoginPage: React.FC = () => {
     const trimmedEmail = email.trim();
 
     if (!trimmedEmail || !password) {
-      setError('Please fill in all fields.');
+      setError('Please fill in all required fields.');
       return;
     }
 
     setLoading(true);
 
     try {
+      // First attempt live backend API if available
       const response = await authApi.login({ email: trimmedEmail, password });
       setLoading(false);
 
       if (response.user.accountStatus === 'LOCKED') {
-        setError('Your account has been locked due to multiple failed attempts. Please contact support.');
+        setError('Your account has been locked. Please contact the system administrator.');
         return;
       }
       if (response.user.accountStatus === 'INACTIVE' || response.user.accountStatus === 'SUSPENDED') {
@@ -70,51 +72,111 @@ export const LoginPage: React.FC = () => {
         navigate(ROUTES.DASHBOARD);
       }
     } catch (_err: unknown) {
-      // Fallback for dev / mock environment
+      // Stand-in authentication & verification against user accounts store
       setTimeout(() => {
         setLoading(false);
 
-        // Simulated role mapping based on test email
-        let role: UserRole = 'ADMIN';
+        const foundUser = userMockStore.findByEmail(trimmedEmail);
+
+        if (!foundUser) {
+          setError(
+            'No account found with this email. Accounts must be registered by a System Administrator.'
+          );
+          return;
+        }
+
+        if (foundUser.status === 'LOCKED') {
+          setError('This account is locked. Please contact the system administrator.');
+          return;
+        }
+        if (foundUser.status === 'SUSPENDED') {
+          setError('This account is suspended. Please contact the system administrator.');
+          return;
+        }
+        if (foundUser.status === 'INACTIVE') {
+          setError('This account is inactive. Please contact the system administrator to activate it.');
+          return;
+        }
+
+        // Verify password
+        const matchesTempPassword = Boolean(
+          foundUser.temporaryPassword && password === foundUser.temporaryPassword
+        );
+        const matchesPermanentPassword = Boolean(
+          foundUser.password && password === foundUser.password
+        );
+        const matchesDefaultSeed =
+          !foundUser.password &&
+          !foundUser.temporaryPassword &&
+          (password === 'admin123' ||
+            password === 'password123' ||
+            password === 'staff123' ||
+            password === 'resident123' ||
+            password.length >= 4);
+
+        if (!matchesTempPassword && !matchesPermanentPassword && !matchesDefaultSeed) {
+          setError(
+            foundUser.temporaryPassword
+              ? 'Invalid password. Please enter the temporary password provided by your administrator.'
+              : 'Invalid email or password. Please verify your credentials.'
+          );
+          return;
+        }
+
+        // Must change password if flagged or if logging in with temporary password
+        const mustChange = Boolean(foundUser.mustChangePassword || matchesTempPassword);
+
+        // Map system role to UI UserRole
+        let role: UserRole = 'STAFF';
         let relStatus: 'OWNER' | 'TENANT' | 'STAFF' | 'RESIDENT' | 'NONE' = 'STAFF';
 
-        if (trimmedEmail.includes('owner')) {
+        if (
+          foundUser.roles.includes('SYSTEM_ADMINISTRATOR') ||
+          foundUser.roles.includes('APARTMENT_MANAGER')
+        ) {
+          role = 'ADMIN';
+          relStatus = 'STAFF';
+        } else if (foundUser.roles.includes('OWNER')) {
           role = 'OWNER';
           relStatus = 'OWNER';
-        } else if (trimmedEmail.includes('tenant')) {
+        } else if (foundUser.roles.includes('TENANT_RESIDENT')) {
           role = 'RESIDENT';
           relStatus = 'TENANT';
-        } else if (trimmedEmail.includes('resident')) {
-          role = 'RESIDENT';
-          relStatus = 'RESIDENT';
-        } else if (trimmedEmail.includes('staff')) {
+        } else {
+          // FINANCE_OFFICER, MAINTENANCE_COORDINATOR, TECHNICIAN, SECURITY_OFFICER
           role = 'STAFF';
           relStatus = 'STAFF';
         }
 
-        const isMustChangePassword = trimmedEmail.includes('force') || password === 'temp123';
+        const authenticatedUser: User = {
+          id: foundUser.id,
+          name: `${foundUser.firstName} ${foundUser.lastName}`.trim(),
+          firstName: foundUser.firstName,
+          lastName: foundUser.lastName,
+          email: foundUser.email,
+          phone: foundUser.phone,
+          role,
+          systemRole: foundUser.roles[0],
+          systemRoles: foundUser.roles,
+          relationshipStatus: relStatus,
+          accountStatus: foundUser.status,
+          mustChangePassword: mustChange,
+        };
 
         dispatch(
           setCredentials({
-            user: {
-              id: 'usr-001',
-              name: trimmedEmail.split('@')[0].toUpperCase(),
-              email: trimmedEmail,
-              role,
-              relationshipStatus: relStatus,
-              mustChangePassword: isMustChangePassword,
-            },
-            token: 'mock-jwt-token-ams-session-key',
-            mustChangePassword: isMustChangePassword,
+            user: authenticatedUser,
+            token: `mock-jwt-token-${foundUser.id}-${Date.now()}`,
+            mustChangePassword: mustChange,
           })
         );
 
-        if (isMustChangePassword) {
+        if (mustChange) {
           navigate(ROUTES.FORCE_CHANGE_PASSWORD);
         } else {
           navigate(ROUTES.DASHBOARD);
         }
-      }, 400);
+      }, 350);
     }
   };
 
@@ -174,7 +236,7 @@ export const LoginPage: React.FC = () => {
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <Input
-              label="Corporate Email"
+              label="Corporate / Registered Email"
               type="email"
               required
               value={email}
@@ -195,6 +257,7 @@ export const LoginPage: React.FC = () => {
                 if (error) setError(null);
               }}
               placeholder="••••••••"
+              helperText="Enter your permanent password or one-time temporary password."
             />
 
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -206,30 +269,31 @@ export const LoginPage: React.FC = () => {
             <Button
               type="submit"
               variant="primary"
-              style={{ width: '100%' }}
+              style={{ width: '100%', minHeight: '44px' }}
               isLoading={loading}
               leftIcon={<LogIn size={16} />}
             >
               Sign In to AMS
             </Button>
 
-            <div style={{ borderTop: '1px solid var(--color-border)', marginTop: '8px', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <Button
-                type="button"
-                variant="secondary"
-                style={{ width: '100%' }}
-                leftIcon={<UserPlus size={16} />}
-                onClick={() => navigate(ROUTES.REGISTER)}
-              >
-                Register New Account
-              </Button>
-
-              <div style={{ textAlign: 'center', fontSize: '0.8125rem', color: 'var(--color-secondary)' }}>
-                Don't have an account yet?{' '}
-                <Link to={ROUTES.REGISTER} style={{ color: 'var(--color-accent)', fontWeight: 600 }}>
-                  Create Account
-                </Link>
+            <div
+              style={{
+                borderTop: '1px solid var(--color-border)',
+                marginTop: '12px',
+                paddingTop: '16px',
+                textAlign: 'center',
+                fontSize: '0.8125rem',
+                color: 'var(--color-text-muted)',
+                lineHeight: 1.5,
+              }}
+            >
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'var(--color-secondary)' }}>
+                <Shield size={15} color="var(--color-accent)" />
+                <span>Authorized Personnel & Resident Access Only</span>
               </div>
+              <p style={{ margin: '6px 0 0', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                All user accounts and one-time passwords are created exclusively by the Administrator.
+              </p>
             </div>
           </form>
         </Card>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppDispatch } from '@/app/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/app/store/hooks';
 import { setMustChangePassword } from '@/features/auth/store/authSlice';
 import { ROUTES } from '@/constants/routes';
 import { Card } from '@/components/ui/Card';
@@ -9,10 +9,12 @@ import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/feedback/Alert';
 import { ShieldAlert, KeyRound } from 'lucide-react';
 import { authApi } from '../api/authApi';
+import { userMockStore } from '@/features/users/api/userMockStore';
 
 export const ForceChangePasswordPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const { user, currentUser } = useAppSelector((state) => state.auth);
 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -42,16 +44,24 @@ export const ForceChangePasswordPage: React.FC = () => {
 
     try {
       await authApi.forceChangePassword({ newPassword });
+      const userIdentifier = user?.email || user?.id || currentUser?.email || currentUser?.id;
+      if (userIdentifier) {
+        userMockStore.updatePassword(userIdentifier, newPassword);
+      }
       setLoading(false);
       dispatch(setMustChangePassword(false));
       navigate(ROUTES.DASHBOARD);
     } catch (_err: unknown) {
-      // Fallback for dev / mock environment
+      // Stand-in update in store
       setTimeout(() => {
+        const userIdentifier = user?.email || user?.id || currentUser?.email || currentUser?.id;
+        if (userIdentifier) {
+          userMockStore.updatePassword(userIdentifier, newPassword);
+        }
         setLoading(false);
         dispatch(setMustChangePassword(false));
         navigate(ROUTES.DASHBOARD);
-      }, 500);
+      }, 400);
     }
   };
 
@@ -87,7 +97,7 @@ export const ForceChangePasswordPage: React.FC = () => {
             Password Update Required
           </h1>
           <p style={{ fontSize: '0.875rem', color: 'var(--color-secondary)', marginTop: '4px' }}>
-            Your account requires a mandatory password reset before accessing the portal.
+            Your account requires setting a permanent password before accessing the portal.
           </p>
         </div>
 
@@ -100,12 +110,13 @@ export const ForceChangePasswordPage: React.FC = () => {
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <Input
-              label="New Password"
+              label="New Permanent Password"
               type="password"
               required
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder="At least 8 characters"
+              helperText="Choose a strong password you will use for future logins."
             />
 
             <Input
@@ -120,7 +131,7 @@ export const ForceChangePasswordPage: React.FC = () => {
             <Button
               type="submit"
               variant="primary"
-              style={{ width: '100%' }}
+              style={{ width: '100%', minHeight: '44px' }}
               isLoading={loading}
               leftIcon={<KeyRound size={16} />}
             >
