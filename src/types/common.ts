@@ -1,6 +1,6 @@
 export type Nullable<T> = T | null;
 
-export type UserRole = 'ADMIN' | 'MANAGER' | 'OWNER' | 'TENANT' | 'STAFF';
+export type UserRole = 'ADMIN' | 'MANAGER' | 'OWNER' | 'TENANT' | 'STAFF' | 'APARTMENT_MANAGER' | 'FINANCE_OFFICER';
 
 export interface PaginationParams {
   page: number;

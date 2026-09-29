@@ -7,6 +7,12 @@ import {
   UserCheck,
   Shield,
   Briefcase,
+  Receipt,
+  CreditCard,
+  FileText,
+  Sliders,
+  Gauge,
+  TrendingUp,
 } from 'lucide-react';
 import { ROUTES } from '@/constants/routes';
 import './Sidebar.css';
@@ -31,6 +37,67 @@ export const Sidebar: React.FC = () => {
         >
           <LayoutDashboard size={18} />
           <span>Dashboard</span>
+        </NavLink>
+
+        <div className="ams-nav-section-title">Finance & Billing</div>
+        <NavLink
+          to={ROUTES.FINANCE_DASHBOARD}
+          className={({ isActive }) =>
+            `ams-nav-item ${isActive ? 'ams-nav-item--active' : ''}`
+          }
+        >
+          <TrendingUp size={18} />
+          <span>Finance Dashboard</span>
+        </NavLink>
+
+        <NavLink
+          to={ROUTES.INVOICES}
+          className={({ isActive }) =>
+            `ams-nav-item ${isActive ? 'ams-nav-item--active' : ''}`
+          }
+        >
+          <FileText size={18} />
+          <span>Invoices</span>
+        </NavLink>
+
+        <NavLink
+          to={ROUTES.PAYMENTS}
+          className={({ isActive }) =>
+            `ams-nav-item ${isActive ? 'ams-nav-item--active' : ''}`
+          }
+        >
+          <CreditCard size={18} />
+          <span>Payments</span>
+        </NavLink>
+
+        <NavLink
+          to={ROUTES.RECEIPTS}
+          className={({ isActive }) =>
+            `ams-nav-item ${isActive ? 'ams-nav-item--active' : ''}`
+          }
+        >
+          <Receipt size={18} />
+          <span>Receipts</span>
+        </NavLink>
+
+        <NavLink
+          to={ROUTES.CHARGES}
+          className={({ isActive }) =>
+            `ams-nav-item ${isActive ? 'ams-nav-item--active' : ''}`
+          }
+        >
+          <Sliders size={18} />
+          <span>Charge Rules</span>
+        </NavLink>
+
+        <NavLink
+          to={ROUTES.UTILITIES}
+          className={({ isActive }) =>
+            `ams-nav-item ${isActive ? 'ams-nav-item--active' : ''}`
+          }
+        >
+          <Gauge size={18} />
+          <span>Utility Metering</span>
         </NavLink>
 
         <div className="ams-nav-section-title">Community & Access</div>
