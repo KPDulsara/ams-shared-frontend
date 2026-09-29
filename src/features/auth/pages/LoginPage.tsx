@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/feedback/Alert';
-import { Building2, LogIn, Shield, KeyRound } from 'lucide-react';
+import { Building2, LogIn, Shield, KeyRound, UserPlus } from 'lucide-react';
 
 import { authApi } from '@/features/auth/api/authApi';
 import { userMockStore } from '@/features/users/api/userMockStore';
@@ -275,6 +275,23 @@ export const LoginPage: React.FC = () => {
             >
               Sign In to AMS
             </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              style={{ width: '100%', minHeight: '42px' }}
+              onClick={() => navigate(ROUTES.REGISTER)}
+              leftIcon={<UserPlus size={16} />}
+            >
+              Create New Account / Register
+            </Button>
+
+            <div style={{ textAlign: 'center', fontSize: '0.875rem', marginTop: '4px' }}>
+              Don't have an account?{' '}
+              <Link to={ROUTES.REGISTER} style={{ color: 'var(--color-accent)', fontWeight: 600 }}>
+                Register Here
+              </Link>
+            </div>
 
             <div
               style={{
