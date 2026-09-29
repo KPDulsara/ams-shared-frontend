@@ -1,4 +1,4 @@
-import apiClient from '@/services/api/client';
+import { apiClient } from '@/services/api/client';
 import type { User } from '../store/authSlice';
 
 export interface LoginRequest {

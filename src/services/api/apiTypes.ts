@@ -1,4 +1,4 @@
-import { AxiosRequestConfig } from 'axios';
+import type { AxiosRequestConfig } from 'axios';
 
 export interface CustomRequestConfig extends AxiosRequestConfig {
   skipAuth?: boolean;

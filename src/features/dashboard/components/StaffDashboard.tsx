@@ -1,9 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import PageContainer from '@/components/layout/PageContainer';
-import Card from '@/components/ui/Card';
-import Badge from '@/components/ui/Badge';
-import Button from '@/components/ui/Button';
+import { PageContainer } from '@/components/layout/PageContainer';
+import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { ROUTES } from '@/constants/routes';
 import { Shield, Briefcase, Users, UserCheck, Building2 } from 'lucide-react';
 import type { User as UserType } from '@/features/auth/store/authSlice';
@@ -18,7 +18,7 @@ export const StaffDashboard: React.FC<StaffDashboardProps> = ({ user }) => {
   return (
     <PageContainer
       title="Staff Operations & Administration"
-      description={`Welcome back, ${user?.name || 'Staff Member'}. Managing facility operations, user access, and directory controls.`}
+      subtitle={`Welcome back, ${user?.name || 'Staff Member'}. Managing facility operations, user access, and directory controls.`}
     >
       {/* Metric Cards Grid */}
       <div

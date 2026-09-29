@@ -16,10 +16,21 @@ import {
   Home,
   User,
   Shield,
+  Contact,
+  ClipboardCheck,
 } from 'lucide-react';
 import { ROUTES } from '@/constants/routes';
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks';
 import { closeMenu } from '@/app/store/uiSlice';
+
+interface NavItem {
+  to: string;
+  label: string;
+  icon: React.ReactNode;
+  end?: boolean;
+  badge?: string;
+  badgeVariant?: string;
+}
 
 export const Sidebar: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -129,6 +140,31 @@ export const Sidebar: React.FC = () => {
           icon: <Home size={20} />,
         },
       ];
+
+  // Group 1 — Identity, Access, Residents & User Relationships
+  const accountNavItems: NavItem[] = [
+    { to: ROUTES.PROFILE, label: 'My Profile', icon: <User size={20} />, end: true },
+    ...(isStaffOrAdmin
+      ? []
+      : [{ to: ROUTES.RELATIONSHIPS, label: 'My Relationships', icon: <Home size={20} /> }]),
+    { to: ROUTES.RESIDENTS, label: 'Residents Directory', icon: <Contact size={20} /> },
+    { to: ROUTES.PROFILE_CHANGE_PASSWORD, label: 'Change Password', icon: <KeyRound size={20} /> },
+  ];
+
+  const identityAdminNavItems: NavItem[] =
+    activeRole === 'ADMIN'
+      ? [
+          { to: ROUTES.USERS, label: 'User Accounts', icon: <Shield size={20} /> },
+          { to: ROUTES.RELATIONSHIP_REVIEW, label: 'Relationship Requests', icon: <ClipboardCheck size={20} /> },
+          { to: ROUTES.ROLES, label: 'Role Reference', icon: <ShieldCheck size={20} /> },
+        ]
+      : [];
+
+  const navSections: { heading: string; items: NavItem[] }[] = [
+    { heading: isStaffOrAdmin ? 'Administration & Oversight' : 'My Community Access', items: navItems },
+    { heading: 'My Account', items: accountNavItems },
+    { heading: 'Identity & Access', items: identityAdminNavItems },
+  ].filter((section) => section.items.length > 0);
 
   const getRoleColor = () => {
     switch (activeRole) {
@@ -332,6 +368,8 @@ export const Sidebar: React.FC = () => {
           overflowY: 'auto',
         }}
       >
+        {navSections.map((section, sectionIndex) => (
+        <React.Fragment key={section.heading}>
         <div
           style={{
             fontSize: '0.6875rem',
@@ -339,13 +377,13 @@ export const Sidebar: React.FC = () => {
             textTransform: 'uppercase',
             letterSpacing: '0.08em',
             color: 'rgba(255, 255, 255, 0.45)',
-            padding: '0.25rem 0.5rem 0.375rem',
+            padding: sectionIndex === 0 ? '0.25rem 0.5rem 0.375rem' : '1rem 0.5rem 0.375rem',
           }}
         >
-          {isStaffOrAdmin ? 'Administration & Oversight' : 'My Community Access'}
+          {section.heading}
         </div>
 
-{navItems.map((item) => (
+        {section.items.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
@@ -393,94 +431,8 @@ export const Sidebar: React.FC = () => {
           </NavLink>
         ))}
 
-        {/* System & Account Section (from loginscreen) */}
-        <div
-          style={{
-            fontSize: '0.6875rem',
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-            color: 'rgba(255, 255, 255, 0.45)',
-            padding: '0.75rem 0.5rem 0.375rem',
-            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-            marginTop: '0.5rem',
-          }}
-        >
-          System & Settings
-        </div>
-
-        <NavLink
-          to={ROUTES.PROFILE}
-          onClick={() => dispatch(closeMenu())}
-          style={({ isActive }) => ({
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            padding: '0.75rem 0.875rem',
-            borderRadius: '8px',
-            color: isActive ? '#FFFFFF' : 'rgba(255, 255, 255, 0.78)',
-            backgroundColor: isActive ? 'rgba(47, 139, 139, 0.32)' : 'transparent',
-            borderLeft: isActive ? '3.5px solid var(--color-accent)' : '3.5px solid transparent',
-            fontWeight: isActive ? 600 : 500,
-            fontSize: '0.875rem',
-            textDecoration: 'none',
-          })}
-        >
-          <span style={{ display: 'inline-flex', opacity: 0.9 }}>
-            <User size={20} />
-          </span>
-          <span style={{ flex: 1, whiteSpace: 'nowrap' }}>My Profile</span>
-        </NavLink>
-
-        {isStaffOrAdmin && (
-          <>
-            <NavLink
-              to={ROUTES.USERS}
-              onClick={() => dispatch(closeMenu())}
-              style={({ isActive }) => ({
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                padding: '0.75rem 0.875rem',
-                borderRadius: '8px',
-                color: isActive ? '#FFFFFF' : 'rgba(255, 255, 255, 0.78)',
-                backgroundColor: isActive ? 'rgba(47, 139, 139, 0.32)' : 'transparent',
-                borderLeft: isActive ? '3.5px solid var(--color-accent)' : '3.5px solid transparent',
-                fontWeight: isActive ? 600 : 500,
-                fontSize: '0.875rem',
-                textDecoration: 'none',
-              })}
-            >
-              <span style={{ display: 'inline-flex', opacity: 0.9 }}>
-                <Shield size={20} />
-              </span>
-              <span style={{ flex: 1, whiteSpace: 'nowrap' }}>User Access</span>
-            </NavLink>
-
-            <NavLink
-              to={ROUTES.ROLES}
-              onClick={() => dispatch(closeMenu())}
-              style={({ isActive }) => ({
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                padding: '0.75rem 0.875rem',
-                borderRadius: '8px',
-                color: isActive ? '#FFFFFF' : 'rgba(255, 255, 255, 0.78)',
-                backgroundColor: isActive ? 'rgba(47, 139, 139, 0.32)' : 'transparent',
-                borderLeft: isActive ? '3.5px solid var(--color-accent)' : '3.5px solid transparent',
-                fontWeight: isActive ? 600 : 500,
-                fontSize: '0.875rem',
-                textDecoration: 'none',
-              })}
-            >
-              <span style={{ display: 'inline-flex', opacity: 0.9 }}>
-                <ShieldCheck size={20} />
-              </span>
-              <span style={{ flex: 1, whiteSpace: 'nowrap' }}>Role Reference</span>
-            </NavLink>
-          </>
-        )}+
+        </React.Fragment>
+        ))}
       </nav>
 
       {/* Role Profile Card at Bottom */}

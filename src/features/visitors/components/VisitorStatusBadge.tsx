@@ -1,6 +1,6 @@
 import React from 'react';
 import { Badge } from '@/components/ui/Badge';
-import { VisitorStatus } from '../types/visitor.types';
+import type { VisitorStatus } from '../types/visitor.types';
 
 export interface VisitorStatusBadgeProps {
   status: VisitorStatus;

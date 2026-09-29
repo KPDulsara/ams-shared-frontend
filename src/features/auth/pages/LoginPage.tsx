@@ -3,10 +3,11 @@ import { useNavigate, useSearchParams, useLocation, Link } from 'react-router-do
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks';
 import { setCredentials } from '@/features/auth/store/authSlice';
 import { ROUTES } from '@/constants/routes';
-import Card from '@/components/ui/Card';
-import Input from '@/components/ui/Input';
-import Button from '@/components/ui/Button';
-import Alert from '@/components/feedback/Alert';
+import type { UserRole } from '@/constants/roles';
+import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { Alert } from '@/components/feedback/Alert';
 import { Building2, LogIn, AlertTriangle, UserPlus } from 'lucide-react';
 
 import { authApi } from '@/features/auth/api/authApi';
@@ -74,17 +75,17 @@ export const LoginPage: React.FC = () => {
         setLoading(false);
 
         // Simulated role mapping based on test email
-        let role: 'ADMIN' | 'MANAGER' | 'OWNER' | 'TENANT' | 'STAFF' = 'ADMIN';
+        let role: UserRole = 'ADMIN';
         let relStatus: 'OWNER' | 'TENANT' | 'STAFF' | 'RESIDENT' | 'NONE' = 'STAFF';
 
         if (trimmedEmail.includes('owner')) {
           role = 'OWNER';
           relStatus = 'OWNER';
         } else if (trimmedEmail.includes('tenant')) {
-          role = 'TENANT';
+          role = 'RESIDENT';
           relStatus = 'TENANT';
         } else if (trimmedEmail.includes('resident')) {
-          role = 'TENANT';
+          role = 'RESIDENT';
           relStatus = 'RESIDENT';
         } else if (trimmedEmail.includes('staff')) {
           role = 'STAFF';
@@ -157,18 +158,17 @@ export const LoginPage: React.FC = () => {
           {isSessionExpired && !error && (
             <div style={{ marginBottom: '16px' }}>
               <Alert
-                variant="warning"
+                type="warning"
                 title="Session Expired"
-                icon={<AlertTriangle size={18} />}
-              >
-                {reduxAuthError || 'Your session has expired. Please sign in again to continue.'}
-              </Alert>
+                message={reduxAuthError || 'Your session has expired. Please sign in again to continue.'}
+                autoDismiss={false}
+              />
             </div>
           )}
 
           {error && (
             <div style={{ marginBottom: '16px' }}>
-              <Alert variant="error">{error}</Alert>
+              <Alert type="error" message={error} autoDismiss={false} />
             </div>
           )}
 
@@ -176,7 +176,7 @@ export const LoginPage: React.FC = () => {
             <Input
               label="Corporate Email"
               type="email"
-              isRequired
+              required
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
@@ -188,7 +188,7 @@ export const LoginPage: React.FC = () => {
             <Input
               label="Password"
               type="password"
-              isRequired
+              required
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value);
@@ -206,7 +206,7 @@ export const LoginPage: React.FC = () => {
             <Button
               type="submit"
               variant="primary"
-              fullWidth
+              style={{ width: '100%' }}
               isLoading={loading}
               leftIcon={<LogIn size={16} />}
             >
@@ -217,7 +217,7 @@ export const LoginPage: React.FC = () => {
               <Button
                 type="button"
                 variant="secondary"
-                fullWidth
+                style={{ width: '100%' }}
                 leftIcon={<UserPlus size={16} />}
                 onClick={() => navigate(ROUTES.REGISTER)}
               >

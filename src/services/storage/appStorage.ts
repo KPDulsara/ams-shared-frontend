@@ -1,6 +1,6 @@
-import { Booking, Facility } from '@/features/facilities/types/facility.types';
-import { Visitor } from '@/features/visitors/types/visitor.types';
-import { Announcement } from '@/features/announcements/types/announcement.types';
+import type { Booking, Facility } from '@/features/facilities/types/facility.types';
+import type { Visitor } from '@/features/visitors/types/visitor.types';
+import type { Announcement } from '@/features/announcements/types/announcement.types';
 import {
   INITIAL_FACILITIES,
   INITIAL_BOOKINGS,

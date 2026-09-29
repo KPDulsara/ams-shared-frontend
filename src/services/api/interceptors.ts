@@ -13,7 +13,7 @@ export const requestInterceptor = (config: InternalAxiosRequestConfig): Internal
 };
 
 export const responseErrorInterceptor = (error: AxiosError): Promise<never> => {
-if (error.response && error.response.status === 401) {
+  if (error.response && error.response.status === 401) {
     tokenStorage.clearTokens();
     store.dispatch(sessionExpired());
 
@@ -28,7 +28,6 @@ if (error.response && error.response.status === 401) {
     console.warn(`[API Error ${error.response.status}]: ${errorMessage}`);
   } else if (error.request) {
     console.warn('[API Network Error]: No response received from server.');
-  }
   }
   return Promise.reject(error);
 };

@@ -1,167 +1,184 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppSelector } from '@/app/store/hooks';
-import PageContainer from '@/components/layout/PageContainer';
-import Card from '@/components/ui/Card';
-import Badge from '@/components/ui/Badge';
-import Button from '@/components/ui/Button';
+import { ChevronRight, Home, KeyRound, Mail, Pencil, Phone, ShieldCheck, User } from 'lucide-react';
+import { PageContainer } from '@/components/layout/PageContainer';
+import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { Alert } from '@/components/feedback/Alert';
+import { LoadingState } from '@/components/feedback/LoadingState';
+import { ErrorMessage } from '@/components/feedback/ErrorMessage';
 import { ROUTES } from '@/constants/routes';
-import { User, Mail, Shield, Key, KeyRound, CheckCircle2 } from 'lucide-react';
-import { authApi } from '../api/authApi';
-import type { User as UserType } from '../store/authSlice';
+import { useAsyncResource } from '@/hooks/useAsyncResource';
+import { useFlashMessage } from '@/hooks/useFlashMessage';
+import { useCurrentAccess } from '@/features/users/hooks/useCurrentAccess';
+import { getFullName } from '@/features/users/utils/userFormat';
+import { AccountStatusBadge } from '@/features/users/components/AccountStatusBadge';
+import { ProfileField, ProfileFieldList } from '@/features/users/components/ProfileField';
+import { RoleBadges } from '@/features/users/components/RoleBadges';
+import { UserAvatar } from '@/features/users/components/UserAvatar';
+import { profileApi } from '../api/profileApi';
+
+interface SecurityActionProps {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  onClick: () => void;
+}
+
+const SecurityAction: React.FC<SecurityActionProps> = ({ icon, title, description, onClick }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    style={{
+      width: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.875rem',
+      padding: '0.875rem 1rem',
+      borderRadius: 'var(--radius-md)',
+      border: '1px solid var(--color-border)',
+      backgroundColor: 'var(--color-surface)',
+      textAlign: 'left',
+      cursor: 'pointer',
+      transition: 'all var(--transition-fast)',
+    }}
+    onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--color-accent)')}
+    onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--color-border)')}
+  >
+    <span
+      aria-hidden="true"
+      style={{
+        width: '36px',
+        height: '36px',
+        borderRadius: 'var(--radius-md)',
+        backgroundColor: 'var(--color-accent-light)',
+        color: 'var(--color-accent-active)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+      }}
+    >
+      {icon}
+    </span>
+    <span style={{ flex: 1, minWidth: 0 }}>
+      <span style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text)' }}>{title}</span>
+      <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{description}</span>
+    </span>
+    <ChevronRight size={16} color="var(--color-text-light)" aria-hidden="true" />
+  </button>
+);
 
 export const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
-  const reduxUser = useAppSelector((state) => state.auth.user);
-  const [profile, setProfile] = useState<UserType | null>(reduxUser);
-
-  useEffect(() => {
-    let isMounted = true;
-    authApi
-      .getProfile()
-      .then((data) => {
-        if (isMounted && data) {
-          setProfile((prev) => ({ ...prev, ...data }));
-        }
-      })
-      .catch(() => {
-        // Silent catch: fallback to redux user data
-      });
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const currentUser = profile || reduxUser;
-  const firstName = currentUser?.firstName || currentUser?.name?.split(' ')[0] || 'Authorized';
-  const lastName = currentUser?.lastName || currentUser?.name?.split(' ').slice(1).join(' ') || 'User';
-  const accountStatus = currentUser?.accountStatus || 'ACTIVE';
-  const grantedRoles = currentUser?.grantedRoles && currentUser.grantedRoles.length > 0
-    ? currentUser.grantedRoles
-    : [currentUser?.role || 'ADMIN'];
+  const flash = useFlashMessage();
+  const { userId, name, email, isAdmin, isStaff } = useCurrentAccess();
+  const { data: profile, loading, error, reload } = useAsyncResource(() => profileApi.getMyProfile({ userId, name, email }), [userId]);
 
   return (
     <PageContainer
       title="My Profile"
-      description="View read-only account credentials, assigned security roles, and account status."
+      subtitle="Your personal details, account access and security settings."
+      maxWidth="1100px"
       actions={
-        <Button
-          variant="primary"
-          leftIcon={<KeyRound size={16} />}
-          onClick={() => navigate(ROUTES.PROFILE_CHANGE_PASSWORD)}
-        >
-          Change Password
-        </Button>
+        profile && (
+          <Button variant="primary" leftIcon={<Pencil size={16} />} onClick={() => navigate(ROUTES.PROFILE_EDIT)}>
+            Edit Profile
+          </Button>
+        )
       }
     >
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '24px' }}>
-        <Card title="Read-Only Identity Information">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div
-                style={{
-                  width: '56px',
-                  height: '56px',
-                  borderRadius: '50%',
-                  backgroundColor: 'var(--color-primary)',
-                  color: '#FFFFFF',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.25rem',
-                  fontWeight: 700,
-                }}
-              >
-                {firstName.charAt(0)}{lastName.charAt(0)}
-              </div>
-              <div>
-                <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--color-primary)' }}>
-                  {firstName} {lastName}
-                </h3>
-                <p style={{ fontSize: '0.875rem', color: 'var(--color-secondary)' }}>
-                  {currentUser?.email || 'user@ams.internal'}
-                </p>
-              </div>
-            </div>
+      {loading ? (
+        <LoadingState message="Loading your profile..." />
+      ) : error || !profile ? (
+        <ErrorMessage title="Could not load your profile" message={error ?? 'Profile not found.'} onRetry={reload} />
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {flash && <Alert type="success" message={flash} />}
+          {profile.pendingEmail && (
+            <Alert
+              type="info"
+              title="Email change pending verification"
+              message={`We sent a verification link to ${profile.pendingEmail}. Until it is confirmed, continue signing in with ${profile.email}.`}
+              autoDismiss={false}
+              showDismissButton={false}
+            />
+          )}
 
-            <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-                  <User size={16} /> First Name
-                </span>
-                <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>
-                  {firstName}
-                </span>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-                  <User size={16} /> Last Name
-                </span>
-                <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>
-                  {lastName}
-                </span>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-                  <Mail size={16} /> Corporate Email
-                </span>
-                <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>
-                  {currentUser?.email || 'user@ams.internal'}
-                </span>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-                  <CheckCircle2 size={16} /> Account Status
-                </span>
-                <Badge variant={accountStatus === 'ACTIVE' ? 'success' : 'warning'}>
-                  {accountStatus}
-                </Badge>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-                  <Shield size={16} /> Granted Roles
-                </span>
-                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                  {grantedRoles.map((r) => (
-                    <Badge key={r} variant="accent">
-                      {r}
-                    </Badge>
-                  ))}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem', alignItems: 'start' }}>
+            <Card title="Personal Information">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
+                <UserAvatar user={profile} size={56} />
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--color-primary)' }}>
+                    {getFullName(profile)}
+                  </div>
+                  <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', wordBreak: 'break-word' }}>
+                    {profile.email}
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </Card>
+              <ProfileFieldList>
+                <ProfileField label="First name" icon={<User size={15} />}>{profile.firstName}</ProfileField>
+                <ProfileField label="Last name" icon={<User size={15} />}>{profile.lastName}</ProfileField>
+                <ProfileField label="Email" icon={<Mail size={15} />}>
+                  {profile.email}
+                  {profile.pendingEmail && (
+                    <div style={{ marginTop: '0.25rem' }}>
+                      <Badge variant="warning" size="sm">Pending: {profile.pendingEmail}</Badge>
+                    </div>
+                  )}
+                </ProfileField>
+                <ProfileField label="Phone" icon={<Phone size={15} />}>{profile.phone}</ProfileField>
+              </ProfileFieldList>
+            </Card>
 
-        <Card title="Security & Credentials">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <Key size={20} color="var(--color-accent)" />
-              <div>
-                <h4 style={{ fontSize: '0.875rem', fontWeight: 600 }}>Security Authentication</h4>
-                <p style={{ fontSize: '0.75rem', color: 'var(--color-secondary)', marginTop: '2px' }}>
-                  Manage corporate password policy and authentication credentials.
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <Card title="Account & Access">
+                <ProfileFieldList>
+                  <ProfileField label="Account status" icon={<ShieldCheck size={15} />}>
+                    <AccountStatusBadge status={profile.status} />
+                  </ProfileField>
+                  <ProfileField label="Roles" icon={<ShieldCheck size={15} />}>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                      <RoleBadges roles={profile.roles} />
+                    </div>
+                  </ProfileField>
+                </ProfileFieldList>
+                <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.75rem' }}>
+                  Roles and account status are managed by a system administrator.
                 </p>
-              </div>
-            </div>
+              </Card>
 
-            <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '16px' }}>
-              <Button
-                variant="secondary"
-                fullWidth
-                leftIcon={<KeyRound size={16} />}
-                onClick={() => navigate(ROUTES.PROFILE_CHANGE_PASSWORD)}
-              >
-                Go to Change Password Page
-              </Button>
+              <Card title="Security & Settings">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+                  <SecurityAction
+                    icon={<Mail size={18} />}
+                    title="Change email address"
+                    description="Request a new sign-in email. It must be verified before it takes effect."
+                    onClick={() => navigate(ROUTES.PROFILE_EMAIL_CHANGE)}
+                  />
+                  <SecurityAction
+                    icon={<KeyRound size={18} />}
+                    title="Change password"
+                    description="Update the password you use to sign in."
+                    onClick={() => navigate(ROUTES.PROFILE_CHANGE_PASSWORD)}
+                  />
+                  {!isAdmin && !isStaff && (
+                    <SecurityAction
+                      icon={<Home size={18} />}
+                      title="My apartment relationships"
+                      description="View or request owner and tenant links to apartment units."
+                      onClick={() => navigate(ROUTES.RELATIONSHIPS)}
+                    />
+                  )}
+                </div>
+              </Card>
             </div>
           </div>
-        </Card>
-      </div>
+        </div>
+      )}
     </PageContainer>
   );
 };

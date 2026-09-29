@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Alert } from '@/components/feedback/Alert';
-import { VisitorRequest } from '../types/visitor.types';
+import type { VisitorRequest } from '../types/visitor.types';
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks';
 import { registerVisitor, clearVisitorFeedback } from '../store/visitorSlice';
 import { Phone, Car } from 'lucide-react';

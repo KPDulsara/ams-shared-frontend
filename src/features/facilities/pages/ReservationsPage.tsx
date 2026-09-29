@@ -6,7 +6,7 @@ import { Alert } from '@/components/feedback/Alert';
 import { LoadingState } from '@/components/feedback/LoadingState';
 import { BookingTable } from '../components/BookingTable';
 import { BookingModal } from '../components/BookingModal';
-import { BookingStatus } from '../types/facility.types';
+import type { BookingStatus } from '../types/facility.types';
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks';
 import { useIsMobile, MobileFilterTabs, MobileTabItem } from '@/components/mobile';
 import {

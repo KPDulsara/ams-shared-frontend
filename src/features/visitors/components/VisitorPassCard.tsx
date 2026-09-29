@@ -18,7 +18,7 @@ import {
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { VisitorStatusBadge } from './VisitorStatusBadge';
-import { Visitor } from '../types/visitor.types';
+import type { Visitor } from '../types/visitor.types';
 import { useAppSelector } from '@/app/store/hooks';
 
 export interface VisitorPassCardProps {

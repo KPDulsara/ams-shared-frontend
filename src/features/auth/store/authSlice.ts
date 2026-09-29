@@ -10,6 +10,7 @@ export interface User {
   lastName?: string;
   email: string;
   phone?: string;
+  unitId?: string;
   role: UserRole;
   relationshipStatus?: RelationshipStatus;
   accountStatus?: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | 'LOCKED';
@@ -105,7 +106,6 @@ export const authSlice = createSlice({
         ...state.currentUser,
         role: action.payload,
       };
-    },
     },
     toggleDemoMode: (state) => {
       state.isDemoMode = !state.isDemoMode;

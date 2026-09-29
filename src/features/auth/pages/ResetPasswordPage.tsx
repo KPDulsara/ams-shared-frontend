@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ROUTES } from '@/constants/routes';
-import Card from '@/components/ui/Card';
-import Input from '@/components/ui/Input';
-import Button from '@/components/ui/Button';
-import Alert from '@/components/feedback/Alert';
+import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { Alert } from '@/components/feedback/Alert';
 import { Building2, ShieldCheck, ArrowLeft } from 'lucide-react';
 
 export const ResetPasswordPage: React.FC = () => {
@@ -78,18 +78,16 @@ export const ResetPasswordPage: React.FC = () => {
         </div>
 
         <Card>
-          {error && <Alert variant="error">{error}</Alert>}
+          {error && <Alert type="error" message={error} autoDismiss={false} />}
           {success && (
-            <Alert variant="success">
-              Password updated successfully! Redirecting to login...
-            </Alert>
+            <Alert type="success" message="Password updated successfully! Redirecting to login..." autoDismiss={false} />
           )}
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <Input
               label="New Password"
               type="password"
-              isRequired
+              required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
@@ -98,7 +96,7 @@ export const ResetPasswordPage: React.FC = () => {
             <Input
               label="Confirm New Password"
               type="password"
-              isRequired
+              required
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="••••••••"
@@ -107,7 +105,7 @@ export const ResetPasswordPage: React.FC = () => {
             <Button
               type="submit"
               variant="primary"
-              fullWidth
+              style={{ width: '100%' }}
               isLoading={loading}
               leftIcon={<ShieldCheck size={16} />}
             >
