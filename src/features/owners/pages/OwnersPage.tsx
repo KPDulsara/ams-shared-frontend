@@ -1,14 +1,14 @@
 import React from 'react';
-import PageContainer from '@/components/layout/PageContainer';
-import Card from '@/components/ui/Card';
-import EmptyState from '@/components/ui/EmptyState';
+import { PageContainer } from '@/components/layout/PageContainer';
+import { Card } from '@/components/ui/Card';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { UserCheck } from 'lucide-react';
 
 export const OwnersPage: React.FC = () => {
   return (
     <PageContainer
       title="Property Owners"
-      description="Manage deed titles, owner registrations, and representative powers of attorney."
+      subtitle="Manage deed titles, owner registrations, and representative powers of attorney."
     >
       <Card>
         <EmptyState

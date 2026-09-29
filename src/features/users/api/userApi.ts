@@ -1,5 +1,5 @@
 import { normalizeEmail } from '@/utils/validation';
-import { getRoleLabel } from '../constants/systemRoles';
+import { SYSTEM_ROLES, SYSTEM_ROLE_CONFIG, getRoleLabel } from '../constants/systemRoles';
 import type {
   CreateUserRequest,
   SystemRole,
@@ -12,6 +12,13 @@ import { mockDelay, userMockStore } from './userMockStore';
 // Mock implementation for the UI-only phase — replace each body with an apiClient
 // call during API/Gateway integration; signatures are intended to stay the same.
 
+export interface RoleReference {
+  id: string;
+  name: string;
+  description: string;
+  permissions?: string[];
+}
+
 const requireUser = (userId: string): UserAccount => {
   const user = userMockStore.findById(userId);
   if (!user) throw new Error('This user account could not be found.');
@@ -19,6 +26,15 @@ const requireUser = (userId: string): UserAccount => {
 };
 
 export const userApi = {
+  getRoles: async (): Promise<RoleReference[]> => {
+    await mockDelay();
+    return SYSTEM_ROLES.map((role) => ({
+      id: role,
+      name: getRoleLabel(role),
+      description: SYSTEM_ROLE_CONFIG[role].description,
+    }));
+  },
+
   getUsers: async (): Promise<UserAccount[]> => {
     await mockDelay();
     return userMockStore.list();

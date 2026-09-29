@@ -73,8 +73,8 @@ const SecurityAction: React.FC<SecurityActionProps> = ({ icon, title, descriptio
 export const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const flash = useFlashMessage();
-  const { userId, isAdmin, isStaff } = useCurrentAccess();
-  const { data: profile, loading, error, reload } = useAsyncResource(() => profileApi.getMyProfile(userId), [userId]);
+  const { userId, name, email, isAdmin, isStaff } = useCurrentAccess();
+  const { data: profile, loading, error, reload } = useAsyncResource(() => profileApi.getMyProfile({ userId, name, email }), [userId]);
 
   return (
     <PageContainer

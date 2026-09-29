@@ -25,9 +25,9 @@ type Feedback = { type: 'success' | 'error'; message: string } | null;
 
 export const EmailChangePage: React.FC = () => {
   const navigate = useNavigate();
-  const { userId } = useCurrentAccess();
+  const { userId, name, email } = useCurrentAccess();
   const { data: profile, setData: setProfile, loading, error, reload } = useAsyncResource(
-    () => profileApi.getMyProfile(userId),
+    () => profileApi.getMyProfile({ userId, name, email }),
     [userId]
   );
 

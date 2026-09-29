@@ -25,8 +25,8 @@ const EMPTY_FORM: UpdateProfileRequest = { firstName: '', lastName: '', phone: '
 
 export const EditProfilePage: React.FC = () => {
   const navigate = useNavigate();
-  const { userId } = useCurrentAccess();
-  const { data: profile, loading, error, reload } = useAsyncResource(() => profileApi.getMyProfile(userId), [userId]);
+  const { userId, name, email } = useCurrentAccess();
+  const { data: profile, loading, error, reload } = useAsyncResource(() => profileApi.getMyProfile({ userId, name, email }), [userId]);
 
   const [values, setValues] = useState<UpdateProfileRequest>(EMPTY_FORM);
   const [errors, setErrors] = useState<FieldErrors<UpdateProfileRequest>>({});

@@ -9,11 +9,14 @@ import {
   ShieldCheck,
   UserCheck,
   X,
-  UserCircle,
+  LayoutGrid,
+  FileText,
+  Landmark,
   KeyRound,
   Home,
+  User,
+  Shield,
   Contact,
-  UserCog,
   ClipboardCheck,
 } from 'lucide-react';
 import { ROUTES } from '@/constants/routes';
@@ -79,6 +82,26 @@ export const Sidebar: React.FC = () => {
           label: 'Broadcast Circulars',
           icon: <Megaphone size={20} />,
         },
+        {
+          to: ROUTES.BUILDINGS,
+          label: 'Buildings & Floors',
+          icon: <Landmark size={20} />,
+        },
+        {
+          to: ROUTES.UNITS,
+          label: 'Unit Inventory',
+          icon: <LayoutGrid size={20} />,
+        },
+        {
+          to: ROUTES.LEASES,
+          label: 'Lease Agreements',
+          icon: <FileText size={20} />,
+        },
+        {
+          to: ROUTES.OWNERSHIPS,
+          label: 'Ownership Records',
+          icon: <KeyRound size={20} />,
+        },
       ]
     : [
         {
@@ -111,11 +134,16 @@ export const Sidebar: React.FC = () => {
           label: 'Community Bulletins',
           icon: <Megaphone size={20} />,
         },
+        {
+          to: ROUTES.MY_RESIDENCE,
+          label: 'My Residence',
+          icon: <Home size={20} />,
+        },
       ];
 
   // Group 1 — Identity, Access, Residents & User Relationships
   const accountNavItems: NavItem[] = [
-    { to: ROUTES.PROFILE, label: 'My Profile', icon: <UserCircle size={20} />, end: true },
+    { to: ROUTES.PROFILE, label: 'My Profile', icon: <User size={20} />, end: true },
     ...(isStaffOrAdmin
       ? []
       : [{ to: ROUTES.RELATIONSHIPS, label: 'My Relationships', icon: <Home size={20} /> }]),
@@ -126,8 +154,9 @@ export const Sidebar: React.FC = () => {
   const identityAdminNavItems: NavItem[] =
     activeRole === 'ADMIN'
       ? [
-          { to: ROUTES.USERS, label: 'User Accounts', icon: <UserCog size={20} /> },
+          { to: ROUTES.USERS, label: 'User Accounts', icon: <Shield size={20} /> },
           { to: ROUTES.RELATIONSHIP_REVIEW, label: 'Relationship Requests', icon: <ClipboardCheck size={20} /> },
+          { to: ROUTES.ROLES, label: 'Role Reference', icon: <ShieldCheck size={20} /> },
         ]
       : [];
 
@@ -401,6 +430,7 @@ export const Sidebar: React.FC = () => {
             )}
           </NavLink>
         ))}
+
         </React.Fragment>
         ))}
       </nav>

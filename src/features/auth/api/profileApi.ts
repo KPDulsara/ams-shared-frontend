@@ -17,6 +17,13 @@ export interface ChangePasswordRequest {
   newPassword: string;
 }
 
+/** The signed-in user as known to the auth state. */
+export interface SessionIdentity {
+  userId: string;
+  name: string;
+  email: string;
+}
+
 /** Mock only: entering this as the current password simulates a rejected change. */
 export const MOCK_INCORRECT_PASSWORD = 'Incorrect1!';
 
@@ -27,9 +34,22 @@ const requireProfile = (userId: string): UserAccount => {
 };
 
 export const profileApi = {
-  getMyProfile: async (userId: string): Promise<UserAccount> => {
+  getMyProfile: async (session: SessionIdentity): Promise<UserAccount> => {
     await mockDelay();
-    return requireProfile(userId);
+    const existing = userMockStore.findById(session.userId);
+    if (existing) return existing;
+    // Mock only: a user signed in through the login screen may not be in the seed data.
+    // The real /users/me endpoint always returns the signed-in account.
+    const [firstName, ...rest] = session.name.trim().split(/\s+/);
+    return userMockStore.insert({
+      id: session.userId,
+      firstName: firstName || session.email,
+      lastName: rest.join(' '),
+      email: session.email,
+      roles: [],
+      status: 'ACTIVE',
+      createdAt: new Date().toISOString(),
+    });
   },
 
   updateMyProfile: async (userId: string, payload: UpdateProfileRequest): Promise<UserAccount> => {
@@ -67,9 +87,8 @@ export const profileApi = {
     return userMockStore.update(userId, { pendingEmail: undefined }) as UserAccount;
   },
 
-  changePassword: async (userId: string, payload: ChangePasswordRequest): Promise<void> => {
+  changePassword: async (_userId: string, payload: ChangePasswordRequest): Promise<void> => {
     await mockDelay(700);
-    requireProfile(userId);
     if (payload.currentPassword === MOCK_INCORRECT_PASSWORD) {
       throw new Error('Your current password is incorrect.');
     }
