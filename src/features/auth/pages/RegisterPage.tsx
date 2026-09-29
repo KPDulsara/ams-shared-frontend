@@ -104,7 +104,6 @@ export const RegisterPage: React.FC = () => {
                 required
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                placeholder="Jane"
               />
               <Input
                 label="Last Name *"
@@ -112,7 +111,6 @@ export const RegisterPage: React.FC = () => {
                 required
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                placeholder="Doe"
               />
             </div>
 
@@ -122,7 +120,6 @@ export const RegisterPage: React.FC = () => {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="jane.doe@example.com"
             />
 
             <Input
@@ -130,7 +127,6 @@ export const RegisterPage: React.FC = () => {
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder="+1 (555) 019-2834"
             />
 
             <div>
@@ -185,7 +181,6 @@ export const RegisterPage: React.FC = () => {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
               />
 
               <Input
@@ -194,7 +189,6 @@ export const RegisterPage: React.FC = () => {
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="••••••••"
               />
             </div>
 

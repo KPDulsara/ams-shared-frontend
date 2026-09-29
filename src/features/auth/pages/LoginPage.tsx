@@ -229,7 +229,6 @@ export const LoginPage: React.FC = () => {
                 setEmail(e.target.value);
                 if (error) setError(null);
               }}
-              placeholder="user@ams.internal"
             />
 
             <div>
@@ -242,7 +241,6 @@ export const LoginPage: React.FC = () => {
                   setPassword(e.target.value);
                   if (error) setError(null);
                 }}
-                placeholder="••••••••"
                 helperText="Enter your permanent password or one-time temporary password."
               />
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '6px' }}>
