@@ -1,31 +1,25 @@
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
-import { useAppSelector } from '@/app/store/hooks';
+import { Navigate } from 'react-router-dom';
+import type { UserRole } from '@/constants/roles';
 import { ROUTES } from '@/constants/routes';
-import type { UserRole } from '@/types/common';
+import { useAppSelector } from '@/app/store/hooks';
 
 export interface ProtectedRouteProps {
+  children: React.ReactNode;
   allowedRoles?: UserRole[];
-  redirectPath?: string;
-  children?: React.ReactNode;
 }
 
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
-  allowedRoles,
-  redirectPath = ROUTES.LOGIN,
-  children,
-}) => {
-  const { isAuthenticated, user } = useAppSelector((state) => state.auth);
+/**
+ * Role gate for a route. Uses `activeRole`, which is set both by sign-in
+ * (setCredentials) and by the demo persona switcher. Frontend checks are UX only;
+ * the backend must still enforce authorization.
+ */
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
+  const { activeRole } = useAppSelector((state) => state.auth);
 
-  if (!isAuthenticated) {
-    return <Navigate to={redirectPath} replace />;
+  if (allowedRoles && !allowedRoles.includes(activeRole)) {
+    return <Navigate to={ROUTES.UNAUTHORIZED} replace />;
   }
 
-  if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-    return <Navigate to={ROUTES.DASHBOARD} replace />;
-  }
-
-  return children ? <>{children}</> : <Outlet />;
+  return <>{children}</>;
 };
-
-export default ProtectedRoute;

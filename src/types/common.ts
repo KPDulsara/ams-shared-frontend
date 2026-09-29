@@ -1,4 +1,4 @@
-export type Nullable<T> = T | null;
+export type StatusType = 'ACTIVE' | 'INACTIVE';
 
 export type UserRole = 'ADMIN' | 'MANAGER' | 'OWNER' | 'TENANT' | 'STAFF' | 'APARTMENT_MANAGER' | 'FINANCE_OFFICER';
 
@@ -9,10 +9,16 @@ export interface PaginationParams {
   order?: 'asc' | 'desc';
 }
 
-export interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
+export type SortDirection = 'asc' | 'desc';
+
+export type RelationshipStatus =
+  | 'OWNER'
+  | 'TENANT'
+  | 'STAFF'
+  | 'RESIDENT'
+  | 'NONE';
+
+export interface PaginationParams {
   page: number;
   limit: number;
-  totalPages: number;
 }

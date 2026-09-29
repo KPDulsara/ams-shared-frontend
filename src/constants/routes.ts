@@ -1,7 +1,20 @@
 export const ROUTES = {
+  // Base & Auth Routes (loginscreen)
   HOME: '/',
   LOGIN: '/login',
+  REGISTER: '/register',
+  FORGOT_PASSWORD: '/forgot-password',
+  RESET_PASSWORD: '/reset-password',
+  FORCE_CHANGE_PASSWORD: '/auth/force-change-password',
   DASHBOARD: '/dashboard',
+  PROFILE: '/profile',
+  PROFILE_EDIT: '/profile/edit',
+  PROFILE_EMAIL_CHANGE: '/profile/email',
+  PROFILE_CHANGE_PASSWORD: '/profile/change-password',
+  UNAUTHORIZED: '/unauthorized',
+  NOT_FOUND: '*',
+
+  // User Management (loginscreen)
   RESIDENTS: '/residents',
   OWNERS: '/owners',
   STAFF: '/staff',
@@ -17,3 +30,10 @@ export const ROUTES = {
 } as const;
 
 export type RouteKey = keyof typeof ROUTES;
+export type AppRoute = typeof ROUTES[keyof typeof ROUTES];
+
+export const buildUserDetailPath = (userId: string): string =>
+  ROUTES.USER_DETAIL.replace(':userId', encodeURIComponent(userId));
+
+export const buildUserEditPath = (userId: string): string =>
+  ROUTES.USER_EDIT.replace(':userId', encodeURIComponent(userId));

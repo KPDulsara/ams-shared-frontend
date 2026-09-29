@@ -1,85 +1,179 @@
-import React from 'react';
-import PageContainer from '@/components/layout/PageContainer';
-import Card from '@/components/ui/Card';
-import Badge from '@/components/ui/Badge';
-import Button from '@/components/ui/Button';
-import { UserPlus } from 'lucide-react';
-import Input from '@/components/ui/Input';
+import React, { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Eye, Search, UserPlus } from 'lucide-react';
+import { PageContainer } from '@/components/layout/PageContainer';
+import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Table, type Column } from '@/components/ui/Table';
+import { Alert } from '@/components/feedback/Alert';
+import { ErrorMessage } from '@/components/feedback/ErrorMessage';
+import { ROUTES, buildUserDetailPath } from '@/constants/routes';
+import { useAsyncResource } from '@/hooks/useAsyncResource';
+import { useCurrentAccess } from '@/features/users/hooks/useCurrentAccess';
+import { AccountStatusBadge } from '@/features/users/components/AccountStatusBadge';
+import { getFullName } from '@/features/users/utils/userFormat';
+import { residentApi } from '../api/residentApi';
+import { RELATIONSHIP_TYPE_CONFIG } from '../constants/relationships';
+import { RestrictedValue } from '../components/RestrictedValue';
+import { getRestrictedFieldVisibility, presentRestrictedValue } from '../utils/profileVisibility';
+import type { ResidentDirectoryEntry } from '../types/resident.types';
 
-interface ResidentItem {
-  id: string;
-  name: string;
-  unit: string;
-  phone: string;
-  email: string;
-  status: 'ACTIVE' | 'PENDING' | 'VACATED';
-}
-
-const mockResidents: ResidentItem[] = [
-  { id: '1', name: 'Alexander Wright', unit: 'A-101', phone: '+1 555-0192', email: 'a.wright@ams.internal', status: 'ACTIVE' },
-  { id: '2', name: 'Sophia Sterling', unit: 'B-304', phone: '+1 555-0144', email: 's.sterling@ams.internal', status: 'ACTIVE' },
-  { id: '3', name: 'Marcus Vance', unit: 'C-202', phone: '+1 555-0178', email: 'm.vance@ams.internal', status: 'PENDING' },
-  { id: '4', name: 'Elena Rostova', unit: 'A-405', phone: '+1 555-0129', email: 'e.rostova@ams.internal', status: 'ACTIVE' },
-];
+const PRIVACY_NOTICE = {
+  admin: 'You are viewing full contact details as a system administrator.',
+  staff: 'Resident contact details are partially masked. Contact management if you need full details.',
+  resident: 'Other residents’ contact details are private. Only your own details are shown.',
+};
 
 export const ResidentsPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { userId, role, isAdmin, isStaff } = useCurrentAccess();
+  const { data: residents, loading, error, reload } = useAsyncResource(() => residentApi.getResidentDirectory(), []);
+  const [search, setSearch] = useState('');
+
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return (residents ?? []).filter(
+      (r) =>
+        !term ||
+        getFullName(r).toLowerCase().includes(term) ||
+        r.units.some((u) => u.unitId.toLowerCase().includes(term))
+    );
+  }, [residents, search]);
+
+  const viewer = { userId, role };
+
+  const columns: Column<ResidentDirectoryEntry>[] = [
+    {
+      key: 'name',
+      header: 'Name',
+      render: (r) => (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
+          {getFullName(r)}
+          {r.userId === userId && (
+            <Badge variant="accent" size="sm">
+              You
+            </Badge>
+          )}
+        </span>
+      ),
+    },
+    {
+      key: 'units',
+      header: 'Units',
+      render: (r) =>
+        r.units.length === 0 ? (
+          <span style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>No approved unit</span>
+        ) : (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', minWidth: '150px' }}>
+            {r.units.map((u) => (
+              <Badge key={`${u.unitId}-${u.relationshipType}`} variant="neutral" size="sm">
+                {u.unitId} · {RELATIONSHIP_TYPE_CONFIG[u.relationshipType].label}
+              </Badge>
+            ))}
+          </div>
+        ),
+    },
+    {
+      key: 'email',
+      header: 'Email',
+      render: (r) => {
+        const visibility = getRestrictedFieldVisibility(viewer, r.userId);
+        return (
+          <RestrictedValue
+            visibility={visibility}
+            display={presentRestrictedValue(r.email, 'email', visibility)}
+            fieldLabel="Email"
+          />
+        );
+      },
+    },
+    {
+      key: 'phone',
+      header: 'Phone',
+      render: (r) => {
+        const visibility = getRestrictedFieldVisibility(viewer, r.userId);
+        return (
+          <RestrictedValue
+            visibility={visibility}
+            display={presentRestrictedValue(r.phone, 'phone', visibility)}
+            fieldLabel="Phone"
+          />
+        );
+      },
+    },
+    ...(isAdmin
+      ? [
+          {
+            key: 'status',
+            header: 'Account',
+            render: (r: ResidentDirectoryEntry) => <AccountStatusBadge status={r.status} />,
+          },
+          {
+            key: 'actions',
+            header: <span className="sr-only">Actions</span>,
+            align: 'right' as const,
+            render: (r: ResidentDirectoryEntry) => (
+              <Button
+                size="sm"
+                variant="ghost"
+                leftIcon={<Eye size={14} />}
+                onClick={() => navigate(buildUserDetailPath(r.userId))}
+                aria-label={`View account for ${getFullName(r)}`}
+              >
+                View
+              </Button>
+            ),
+          },
+        ]
+      : []),
+  ];
+
   return (
     <PageContainer
       title="Residents Directory"
-      description="Manage building occupants, leases, and contact verification."
+      subtitle="Owners and tenants linked to apartment units through approved relationships."
       actions={
-        <Button variant="primary" leftIcon={<UserPlus size={16} />}>
-          Add Resident
-        </Button>
+        isAdmin && (
+          <Button variant="primary" leftIcon={<UserPlus size={16} />} onClick={() => navigate(ROUTES.USER_CREATE)}>
+            Add Resident
+          </Button>
+        )
       }
     >
-      <Card>
-        <div style={{ marginBottom: '16px', maxWidth: '320px' }}>
-          <Input placeholder="Search residents by name or unit..." />
-        </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <Alert
+          type="info"
+          message={isAdmin ? PRIVACY_NOTICE.admin : isStaff ? PRIVACY_NOTICE.staff : PRIVACY_NOTICE.resident}
+          autoDismiss={false}
+          showDismissButton={false}
+        />
 
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ textAlign: 'left' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid var(--color-border)', backgroundColor: 'var(--color-surface-hover)' }}>
-                <th style={{ padding: '12px 16px', color: 'var(--color-primary)', fontSize: '0.8125rem' }}>Name</th>
-                <th style={{ padding: '12px 16px', color: 'var(--color-primary)', fontSize: '0.8125rem' }}>Unit</th>
-                <th style={{ padding: '12px 16px', color: 'var(--color-primary)', fontSize: '0.8125rem' }}>Contact</th>
-                <th style={{ padding: '12px 16px', color: 'var(--color-primary)', fontSize: '0.8125rem' }}>Status</th>
-                <th style={{ padding: '12px 16px', color: 'var(--color-primary)', fontSize: '0.8125rem', textAlign: 'right' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {mockResidents.map((resident) => (
-                <tr
-                  key={resident.id}
-                  style={{
-                    borderBottom: '1px solid var(--color-border)',
-                    fontSize: '0.875rem',
-                  }}
-                >
-                  <td style={{ padding: '12px 16px', fontWeight: 500 }}>{resident.name}</td>
-                  <td style={{ padding: '12px 16px' }}>
-                    <Badge variant="accent">{resident.unit}</Badge>
-                  </td>
-                  <td style={{ padding: '12px 16px', color: 'var(--color-text-muted)' }}>
-                    <div>{resident.email}</div>
-                    <div style={{ fontSize: '0.75rem' }}>{resident.phone}</div>
-                  </td>
-                  <td style={{ padding: '12px 16px' }}>
-                    <Badge variant={resident.status === 'ACTIVE' ? 'success' : 'warning'}>
-                      {resident.status}
-                    </Badge>
-                  </td>
-                  <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                    <Button size="sm" variant="ghost">View Details</Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+        <Card padding="sm">
+          <div style={{ maxWidth: '360px' }}>
+            <Input
+              aria-label="Search residents by name or unit"
+              placeholder="Search by name or unit"
+              leftIcon={<Search size={16} />}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+        </Card>
+
+        {error ? (
+          <ErrorMessage title="Could not load residents" message={error} onRetry={reload} />
+        ) : (
+          <Table
+            columns={columns}
+            data={filtered}
+            keyExtractor={(r) => r.userId}
+            isLoading={loading}
+            emptyText={search ? 'No residents match your search.' : 'No residents are registered yet.'}
+          />
+        )}
+      </div>
     </PageContainer>
   );
 };
