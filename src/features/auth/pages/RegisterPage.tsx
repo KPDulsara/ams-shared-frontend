@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/feedback/Alert';
-import { Building2, UserPlus } from 'lucide-react';
+import { Building2, UserPlus, Home, Building } from 'lucide-react';
 import { authApi } from '@/features/auth/api/authApi';
 
 export const RegisterPage: React.FC = () => {
@@ -72,49 +72,34 @@ export const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'var(--color-background)',
-        padding: '24px',
-      }}
-    >
-      <div style={{ width: '100%', maxWidth: '480px' }}>
+    <div className="auth-bg-wrapper">
+      <div className="auth-bg-blob-1" />
+      <div className="auth-bg-blob-2" />
+
+      <div style={{ width: '100%', maxWidth: '520px', position: 'relative', zIndex: 1 }}>
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <div
-            style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '12px',
-              backgroundColor: 'var(--color-primary)',
-              color: '#FFFFFF',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: '16px',
-            }}
-          >
-            <Building2 size={28} />
+          <div className="auth-logo-badge">
+            <UserPlus size={28} />
           </div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-primary)' }}>
+          <div className="auth-pill-badge">
+            <span>✦ Registration Request</span>
+          </div>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--color-primary)', letterSpacing: '-0.5px' }}>
             Create AMS Account
           </h1>
-          <p style={{ fontSize: '0.875rem', color: 'var(--color-secondary)', marginTop: '4px' }}>
-            Apartment Management System Registration
+          <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
+            Request access to your apartment building portal & resident services
           </p>
         </div>
 
-        <Card>
+        <div className="auth-card-container">
           {error && <Alert type="error" message={error} autoDismiss={false} />}
           {successMessage && <Alert type="success" message={successMessage} autoDismiss={false} />}
 
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <Input
-                label="First Name"
+                label="First Name *"
                 type="text"
                 required
                 value={firstName}
@@ -122,7 +107,7 @@ export const RegisterPage: React.FC = () => {
                 placeholder="Jane"
               />
               <Input
-                label="Last Name"
+                label="Last Name *"
                 type="text"
                 required
                 value={lastName}
@@ -132,12 +117,12 @@ export const RegisterPage: React.FC = () => {
             </div>
 
             <Input
-              label="Corporate Email"
+              label="Corporate / Personal Email *"
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="jane.doe@ams.internal"
+              placeholder="jane.doe@example.com"
             />
 
             <Input
@@ -145,7 +130,7 @@ export const RegisterPage: React.FC = () => {
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder="+1 555-0199"
+              placeholder="+1 (555) 019-2834"
             />
 
             <div>
@@ -155,65 +140,82 @@ export const RegisterPage: React.FC = () => {
                   fontSize: '0.8125rem',
                   fontWeight: 600,
                   color: 'var(--color-primary)',
-                  marginBottom: '6px',
+                  marginBottom: '8px',
                 }}
               >
                 Requested Role *
               </label>
-              <select
-                value={requestedRole}
-                onChange={(e) => setRequestedRole(e.target.value as 'OWNER' | 'TENANT')}
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  borderRadius: '6px',
-                  border: '1px solid var(--color-border)',
-                  backgroundColor: 'var(--color-surface)',
-                  fontSize: '0.875rem',
-                  color: 'var(--color-primary)',
-                }}
-              >
-                <option value="TENANT">Tenant / Resident</option>
-                <option value="OWNER">Property Owner</option>
-              </select>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <div
+                  className={`auth-role-card ${requestedRole === 'TENANT' ? 'active' : ''}`}
+                  onClick={() => setRequestedRole('TENANT')}
+                >
+                  <Home size={20} color={requestedRole === 'TENANT' ? '#2F8B8B' : '#64748B'} />
+                  <div>
+                    <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-primary)' }}>
+                      Tenant / Resident
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                      Renting a unit
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  className={`auth-role-card ${requestedRole === 'OWNER' ? 'active' : ''}`}
+                  onClick={() => setRequestedRole('OWNER')}
+                >
+                  <Building size={20} color={requestedRole === 'OWNER' ? '#2F8B8B' : '#64748B'} />
+                  <div>
+                    <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-primary)' }}>
+                      Property Owner
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                      Owns unit in building
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <Input
-              label="Password"
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-            />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <Input
+                label="Password *"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+              />
 
-            <Input
-              label="Confirm Password"
-              type="password"
-              required
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="••••••••"
-            />
+              <Input
+                label="Confirm Password *"
+                type="password"
+                required
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+              />
+            </div>
 
             <Button
               type="submit"
-              variant="primary"
-              style={{ width: '100%' }}
+              className="auth-primary-btn"
+              style={{ width: '100%', minHeight: '46px', borderRadius: '10px', marginTop: '6px', fontSize: '0.9375rem' }}
               isLoading={loading}
-              leftIcon={<UserPlus size={16} />}
+              leftIcon={<UserPlus size={18} />}
             >
-              Register Account
+              Submit Registration Request
             </Button>
 
             <div style={{ textAlign: 'center', fontSize: '0.875rem', marginTop: '8px' }}>
-              Already have an account?{' '}
-              <Link to={ROUTES.LOGIN} style={{ color: 'var(--color-accent)', fontWeight: 500 }}>
-                Sign In
+              Already registered?{' '}
+              <Link to={ROUTES.LOGIN} style={{ color: 'var(--color-accent)', fontWeight: 600, textDecoration: 'none' }}>
+                Sign In to your account
               </Link>
             </div>
           </form>
-        </Card>
+        </div>
       </div>
     </div>
   );
