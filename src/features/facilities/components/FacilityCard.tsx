@@ -3,7 +3,7 @@ import { Users, MapPin, Clock, Calendar } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { Facility } from '../types/facility.types';
+import type { Facility } from '../types/facility.types';
 
 export interface FacilityCardProps {
   facility: Facility;

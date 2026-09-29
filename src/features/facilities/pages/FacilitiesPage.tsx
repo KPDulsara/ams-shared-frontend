@@ -8,7 +8,7 @@ import { BookingModal } from '../components/BookingModal';
 import { LoadingState } from '@/components/feedback/LoadingState';
 import { ErrorMessage } from '@/components/feedback/ErrorMessage';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Facility } from '../types/facility.types';
+import type { Facility } from '../types/facility.types';
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks';
 import { fetchFacilities } from '../store/facilitySlice';
 

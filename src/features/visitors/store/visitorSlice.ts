@@ -1,5 +1,5 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { Visitor, VisitorRequest } from '../types/visitor.types';
+import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
+import type { Visitor, VisitorRequest } from '../types/visitor.types';
 import { visitorApi } from '../api/visitorApi';
 
 interface VisitorState {

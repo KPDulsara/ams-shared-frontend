@@ -1,5 +1,5 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { Announcement, AnnouncementRequest } from '../types/announcement.types';
+import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
+import type { Announcement, AnnouncementRequest } from '../types/announcement.types';
 import { announcementApi } from '../api/announcementApi';
 
 interface AnnouncementState {

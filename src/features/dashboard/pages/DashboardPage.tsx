@@ -17,7 +17,7 @@ import {
 import { PageContainer } from '@/components/layout/PageContainer';
 import { StatCard } from '../components/StatCard';
 import { QuickActionCard } from '../components/QuickActionCard';
-import { ActivityTimeline, ActivityItem } from '../components/ActivityTimeline';
+import { ActivityTimeline, type ActivityItem } from '../components/ActivityTimeline';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';

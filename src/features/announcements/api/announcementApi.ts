@@ -1,5 +1,5 @@
 import { apiClient } from '@/services/api/client';
-import { Announcement, AnnouncementRequest } from '../types/announcement.types';
+import type { Announcement, AnnouncementRequest } from '../types/announcement.types';
 import { appStorage } from '@/services/storage/appStorage';
 
 export const announcementApi = {

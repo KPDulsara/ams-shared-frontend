@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Alert } from '@/components/feedback/Alert';
-import { Facility, BookingRequest } from '../types/facility.types';
+import type { Facility, BookingRequest } from '../types/facility.types';
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks';
 import { createBooking, clearFeedback } from '../store/facilitySlice';
 import {

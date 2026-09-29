@@ -1,6 +1,6 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { PRESET_USERS, MockUser, UserRole } from '@/constants/roles';
-import { AuthState } from '../types/auth.types';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import { PRESET_USERS, type UserRole, type MockUser } from '@/constants/roles';
+import type { AuthState } from '../types/auth.types';
 
 const initialUser: MockUser = PRESET_USERS[0];
 

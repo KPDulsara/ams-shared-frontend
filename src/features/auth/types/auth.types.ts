@@ -1,4 +1,4 @@
-import { MockUser, UserRole } from '@/constants/roles';
+import type { MockUser, UserRole } from '@/constants/roles';
 
 export interface AuthState {
   currentUser: MockUser;

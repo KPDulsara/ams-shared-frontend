@@ -1,4 +1,4 @@
-import { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { tokenStorage } from '../storage/tokenStorage';
 
 export const requestInterceptor = (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {

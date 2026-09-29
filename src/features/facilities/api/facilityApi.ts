@@ -1,5 +1,5 @@
 import { apiClient } from '@/services/api/client';
-import { Facility, Booking, BookingRequest, BookingStatusUpdateRequest, BookingStatus } from '../types/facility.types';
+import type { Facility, Booking, BookingRequest, BookingStatusUpdateRequest, BookingStatus } from '../types/facility.types';
 import { appStorage } from '@/services/storage/appStorage';
 
 export const facilityApi = {

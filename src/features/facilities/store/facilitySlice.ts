@@ -1,5 +1,5 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { Facility, Booking, BookingRequest, BookingStatus } from '../types/facility.types';
+import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
+import type { Facility, Booking, BookingRequest, BookingStatus } from '../types/facility.types';
 import { facilityApi } from '../api/facilityApi';
 
 interface FacilityState {

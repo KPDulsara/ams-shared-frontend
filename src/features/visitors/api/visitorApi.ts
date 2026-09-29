@@ -1,5 +1,5 @@
 import { apiClient } from '@/services/api/client';
-import { Visitor, VisitorRequest } from '../types/visitor.types';
+import type { Visitor, VisitorRequest } from '../types/visitor.types';
 import { appStorage } from '@/services/storage/appStorage';
 
 export const visitorApi = {

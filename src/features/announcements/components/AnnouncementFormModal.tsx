@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Alert } from '@/components/feedback/Alert';
-import { AnnouncementRequest } from '../types/announcement.types';
+import type { AnnouncementRequest } from '../types/announcement.types';
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks';
 import { publishAnnouncement, clearAnnouncementFeedback } from '../store/announcementSlice';
 

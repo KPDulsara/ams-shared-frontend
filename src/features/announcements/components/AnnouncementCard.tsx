@@ -2,7 +2,7 @@ import React from 'react';
 import { Megaphone, Calendar, UserCheck } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { Announcement } from '../types/announcement.types';
+import type { Announcement } from '../types/announcement.types';
 
 export interface AnnouncementCardProps {
   announcement: Announcement;

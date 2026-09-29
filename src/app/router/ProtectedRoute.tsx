@@ -1,5 +1,5 @@
 import React from 'react';
-import { UserRole } from '@/constants/roles';
+import type { UserRole } from '@/constants/roles';
 import { useAppSelector } from '@/app/store/hooks';
 import { Alert } from '@/components/feedback/Alert';
 

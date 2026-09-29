@@ -1,5 +1,5 @@
 import React from 'react';
-import { Table, Column } from '@/components/ui/Table';
+import { Table, type Column } from '@/components/ui/Table';
 import { Button } from '@/components/ui/Button';
 import { BookingStatusBadge } from './BookingStatusBadge';
 import { Check, X, Calendar, User, Clock, Trash2, CheckCircle2, Users } from 'lucide-react';

@@ -1,8 +1,8 @@
 import React from 'react';
-import { Table, Column } from '@/components/ui/Table';
+import { Table, type Column } from '@/components/ui/Table';
 import { Button } from '@/components/ui/Button';
 import { VisitorStatusBadge } from './VisitorStatusBadge';
-import { Visitor } from '../types/visitor.types';
+import type { Visitor } from '../types/visitor.types';
 import { CheckCircle2, QrCode, Home, Calendar, Clock, User } from 'lucide-react';
 import { useAppSelector } from '@/app/store/hooks';
 
