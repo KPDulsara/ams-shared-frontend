@@ -283,15 +283,8 @@ export const LoginPage: React.FC = () => {
               onClick={() => navigate(ROUTES.REGISTER)}
               leftIcon={<UserPlus size={16} />}
             >
-              Create New Account / Register
+              Register Account
             </Button>
-
-            <div style={{ textAlign: 'center', fontSize: '0.875rem', marginTop: '4px' }}>
-              Don't have an account?{' '}
-              <Link to={ROUTES.REGISTER} style={{ color: 'var(--color-accent)', fontWeight: 600 }}>
-                Register Here
-              </Link>
-            </div>
 
             <div
               style={{
