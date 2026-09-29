@@ -51,6 +51,10 @@ export const userApi = {
     if (userMockStore.isEmailTaken(email)) {
       throw new Error('An account with this email address already exists.');
     }
+    const tempPassword =
+      payload.temporaryPassword?.trim() ||
+      `AMS#${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+
     return userMockStore.insert({
       id: `usr-${Date.now()}`,
       firstName: payload.firstName.trim(),
@@ -59,6 +63,8 @@ export const userApi = {
       phone: payload.phone.trim() || undefined,
       roles: payload.roles,
       status: payload.status,
+      temporaryPassword: tempPassword,
+      mustChangePassword: true,
       createdAt: new Date().toISOString(),
     });
   },

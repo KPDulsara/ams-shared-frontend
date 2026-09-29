@@ -15,6 +15,8 @@ export interface User {
   relationshipStatus?: RelationshipStatus;
   accountStatus?: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | 'LOCKED';
   grantedRoles?: UserRole[];
+  systemRole?: string;
+  systemRoles?: string[];
   mustChangePassword?: boolean;
 }
 

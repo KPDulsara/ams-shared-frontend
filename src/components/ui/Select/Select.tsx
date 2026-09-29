@@ -308,7 +308,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
               borderRadius: '10px',
               border: '1px solid #E2E8F0',
               boxShadow: '0 12px 28px -4px rgba(15, 23, 42, 0.16), 0 4px 10px rgba(15, 23, 42, 0.06)',
-              zIndex: 1050,
+              zIndex: 1100,
               overflow: 'hidden',
               animation: 'dropdownFadeIn 0.16s ease-out',
             }}
@@ -376,7 +376,15 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                       role="option"
                       aria-selected={isSelected}
                       onMouseEnter={() => setHighlightedIndex(idx)}
-                      onClick={() => handleSelect(opt)}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleSelect(opt);
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSelect(opt);
+                      }}
                       style={{
                         padding: '0.625rem 0.75rem',
                         borderRadius: '6px',

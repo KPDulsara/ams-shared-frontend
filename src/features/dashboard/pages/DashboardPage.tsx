@@ -1,48 +1,26 @@
 import React from 'react';
 import { useAppSelector } from '@/app/store/hooks';
-import BasicDashboard from '../components/BasicDashboard';
+import ResidentDashboard from '../components/ResidentDashboard';
 import OwnerTenantDashboard from '../components/OwnerTenantDashboard';
 import StaffDashboard from '../components/StaffDashboard';
 
 export const DashboardPage: React.FC = () => {
-  const { user } = useAppSelector((state) => state.auth);
+  const { user, currentUser, activeRole } = useAppSelector((state) => state.auth);
+  const effectiveUser = user || currentUser;
 
-  // Mapping logic:
-  // OWNER → Owner-Tenant Dashboard
-  // TENANT → Owner-Tenant Dashboard
-  // RESIDENT → Basic Dashboard
-  // STAFF → Staff Dashboard
-  // MANAGER → Staff Dashboard
-  // ADMIN → Staff Dashboard
-  // NONE / missing relationshipStatus → Basic Dashboard (unless role specifies STAFF/MANAGER/ADMIN/OWNER/TENANT)
+  // Determine dashboard strictly by user's active role:
+  // 1. ADMIN / STAFF / MANAGER -> Staff Dashboard
+  if (activeRole === 'ADMIN' || activeRole === 'STAFF') {
+    return <StaffDashboard user={effectiveUser} />;
+  }
 
-  const renderDashboardVariant = () => {
-    const relationshipStatus = user?.relationshipStatus;
-    const role = user?.role;
+  // 2. OWNER -> Property Owner Dashboard
+  if (activeRole === 'OWNER') {
+    return <OwnerTenantDashboard user={effectiveUser} />;
+  }
 
-    // Check relationshipStatus if defined
-    if (relationshipStatus) {
-      if (relationshipStatus === 'OWNER' || relationshipStatus === 'TENANT') {
-        return <OwnerTenantDashboard user={user} />;
-      }
-      if (relationshipStatus === 'STAFF') {
-        return <StaffDashboard user={user} />;
-      }
-      if (relationshipStatus === 'RESIDENT' || relationshipStatus === 'NONE') {
-        return <BasicDashboard user={user} />;
-      }
-    }
-
-    // Fallback to role mapping
-    if (role === 'ADMIN' || role === 'MANAGER' || role === 'STAFF') {
-      return <StaffDashboard user={user} />;
-    }
-    if (role === 'OWNER' || role === 'TENANT') {
-      return <OwnerTenantDashboard user={user} />;
-    }
-
-    return <BasicDashboard user={user} />;
-  };
-
-  return renderDashboardVariant();
+  // 3. RESIDENT (including Tenants and general residents) -> Resident Community Portal Dashboard
+  return <ResidentDashboard user={effectiveUser} />;
 };
+
+export default DashboardPage;

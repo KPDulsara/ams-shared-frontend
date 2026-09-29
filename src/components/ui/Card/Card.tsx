@@ -13,6 +13,7 @@ export interface CardProps {
   style?: React.CSSProperties;
   onClick?: () => void;
   hoverable?: boolean;
+  overflow?: React.CSSProperties['overflow'];
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -28,6 +29,7 @@ export const Card: React.FC<CardProps> = ({
   style,
   onClick,
   hoverable = false,
+  overflow = 'visible',
 }) => {
   const getPadding = (): string => {
     switch (padding) {
@@ -56,7 +58,7 @@ export const Card: React.FC<CardProps> = ({
         boxShadow: 'var(--shadow-sm)',
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'hidden',
+        overflow: style?.overflow ?? overflow,
         transition: 'all var(--transition-normal)',
         cursor: onClick || hoverable ? 'pointer' : 'default',
         ...style,
@@ -89,7 +91,9 @@ export const Card: React.FC<CardProps> = ({
           {action && <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>{action}</div>}
         </div>
       )}
-      <div style={{ padding: getPadding(), flex: 1 }}>{children}</div>
+      <div style={{ padding: getPadding(), flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {children}
+      </div>
       {footer && (
         <div
           style={{
