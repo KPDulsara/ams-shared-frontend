@@ -87,7 +87,6 @@ export const CreateChargeRuleModal: React.FC<Props> = ({ isOpen, onClose, onSubm
                 <option value="MANAGEMENT_FEE">MANAGEMENT</option>
                 <option value="PARKING_FEE">PARKING</option>
                 <option value="FACILITY_FEE">FACILITY</option>
-                <option value="OTHER">OTHER</option>
               </select>
             </div>
 
