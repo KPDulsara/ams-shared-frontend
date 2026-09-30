@@ -19,6 +19,20 @@ const SEED_USERS: UserAccount[] = [
     roles: ['SYSTEM_ADMINISTRATOR', 'APARTMENT_MANAGER'],
     status: 'ACTIVE',
     createdAt: '2025-01-06T09:00:00Z',
+    password: 'admin123',
+    mustChangePassword: false,
+  },
+  {
+    id: 'admin-002',
+    firstName: 'Eleanor',
+    lastName: 'Sterling (Admin)',
+    email: 'admin@ams.internal',
+    phone: '+1 555-0100',
+    roles: ['SYSTEM_ADMINISTRATOR', 'APARTMENT_MANAGER'],
+    status: 'ACTIVE',
+    createdAt: '2025-01-01T09:00:00Z',
+    password: 'admin123',
+    mustChangePassword: false,
   },
   {
     id: 'staff-001',
@@ -29,6 +43,8 @@ const SEED_USERS: UserAccount[] = [
     roles: ['SECURITY_OFFICER'],
     status: 'ACTIVE',
     createdAt: '2025-02-10T09:00:00Z',
+    password: 'staff123',
+    mustChangePassword: false,
   },
   {
     id: 'resident-001',
@@ -39,6 +55,8 @@ const SEED_USERS: UserAccount[] = [
     roles: ['TENANT_RESIDENT'],
     status: 'ACTIVE',
     createdAt: '2025-03-02T10:15:00Z',
+    password: 'resident123',
+    mustChangePassword: false,
   },
   {
     id: 'resident-002',
@@ -49,6 +67,8 @@ const SEED_USERS: UserAccount[] = [
     roles: ['OWNER', 'TENANT_RESIDENT'],
     status: 'ACTIVE',
     createdAt: '2025-03-05T14:40:00Z',
+    password: 'owner123',
+    mustChangePassword: false,
   },
   {
     id: 'resident-003',
@@ -59,6 +79,8 @@ const SEED_USERS: UserAccount[] = [
     roles: ['TENANT_RESIDENT'],
     status: 'ACTIVE',
     createdAt: '2025-04-11T08:20:00Z',
+    password: 'resident123',
+    mustChangePassword: false,
   },
   {
     id: 'resident-004',
@@ -69,6 +91,8 @@ const SEED_USERS: UserAccount[] = [
     roles: ['OWNER'],
     status: 'ACTIVE',
     createdAt: '2025-05-19T16:05:00Z',
+    password: 'owner123',
+    mustChangePassword: false,
   },
   {
     id: 'resident-005',
@@ -79,6 +103,8 @@ const SEED_USERS: UserAccount[] = [
     roles: ['TENANT_RESIDENT'],
     status: 'ACTIVE',
     createdAt: '2025-06-01T11:30:00Z',
+    password: 'resident123',
+    mustChangePassword: false,
   },
   {
     id: 'resident-006',
@@ -89,6 +115,8 @@ const SEED_USERS: UserAccount[] = [
     roles: ['OWNER'],
     status: 'ACTIVE',
     createdAt: '2025-06-22T13:10:00Z',
+    password: 'owner123',
+    mustChangePassword: false,
   },
   {
     id: 'usr-101',
@@ -99,6 +127,8 @@ const SEED_USERS: UserAccount[] = [
     roles: ['FINANCE_OFFICER'],
     status: 'ACTIVE',
     createdAt: '2025-07-03T09:45:00Z',
+    password: 'finance123',
+    mustChangePassword: false,
   },
   {
     id: 'usr-102',
@@ -109,6 +139,8 @@ const SEED_USERS: UserAccount[] = [
     roles: ['MAINTENANCE_COORDINATOR'],
     status: 'ACTIVE',
     createdAt: '2025-07-15T10:00:00Z',
+    password: 'maint123',
+    mustChangePassword: false,
   },
   {
     id: 'usr-103',
@@ -119,6 +151,8 @@ const SEED_USERS: UserAccount[] = [
     roles: ['TECHNICIAN'],
     status: 'SUSPENDED',
     createdAt: '2025-08-08T15:25:00Z',
+    password: 'tech123',
+    mustChangePassword: false,
   },
   {
     id: 'usr-104',
@@ -128,6 +162,8 @@ const SEED_USERS: UserAccount[] = [
     roles: [],
     status: 'INACTIVE',
     createdAt: '2026-09-20T12:00:00Z',
+    password: 'user123',
+    mustChangePassword: false,
   },
   {
     id: 'usr-105',
@@ -138,8 +174,37 @@ const SEED_USERS: UserAccount[] = [
     roles: ['TENANT_RESIDENT'],
     status: 'LOCKED',
     createdAt: '2025-09-30T17:50:00Z',
+    password: 'user123',
+    mustChangePassword: false,
   },
 ];
+
+const STORAGE_KEY = 'ams_user_accounts_store_v1';
+
+const cloneUser = (user: UserAccount): UserAccount => ({ ...user, roles: [...user.roles] });
+
+const loadUsersFromStorage = (): UserAccount[] => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return SEED_USERS.map(cloneUser);
+};
+
+const saveUsersToStorage = (list: UserAccount[]) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  } catch {
+    // ignore
+  }
+};
 
 const MOCK_LATENCY_MS = 450;
 
@@ -147,15 +212,21 @@ const MOCK_LATENCY_MS = 450;
 export const mockDelay = (ms: number = MOCK_LATENCY_MS): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
-const cloneUser = (user: UserAccount): UserAccount => ({ ...user, roles: [...user.roles] });
-
-let users: UserAccount[] = SEED_USERS.map(cloneUser);
+let users: UserAccount[] = loadUsersFromStorage();
 
 export const userMockStore = {
   list: (): UserAccount[] => users.map(cloneUser),
 
   findById: (id: string): UserAccount | undefined => {
     const user = users.find((u) => u.id === id);
+    return user ? cloneUser(user) : undefined;
+  },
+
+  findByEmail: (email: string): UserAccount | undefined => {
+    const target = email.trim().toLowerCase();
+    const user = users.find(
+      (u) => u.email.toLowerCase() === target || u.pendingEmail?.toLowerCase() === target
+    );
     return user ? cloneUser(user) : undefined;
   },
 
@@ -170,6 +241,7 @@ export const userMockStore = {
 
   insert: (user: UserAccount): UserAccount => {
     users = [cloneUser(user), ...users];
+    saveUsersToStorage(users);
     return cloneUser(user);
   },
 
@@ -180,6 +252,26 @@ export const userMockStore = {
       updated = { ...u, ...patch };
       return updated;
     });
+    if (updated) saveUsersToStorage(users);
     return updated ? cloneUser(updated) : undefined;
+  },
+
+  updatePassword: (userIdOrEmail: string, newPassword: string): boolean => {
+    const target = userIdOrEmail.trim().toLowerCase();
+    let found = false;
+    users = users.map((u) => {
+      if (u.id === userIdOrEmail || u.email.toLowerCase() === target) {
+        found = true;
+        return {
+          ...u,
+          password: newPassword,
+          temporaryPassword: undefined,
+          mustChangePassword: false,
+        };
+      }
+      return u;
+    });
+    if (found) saveUsersToStorage(users);
+    return found;
   },
 };

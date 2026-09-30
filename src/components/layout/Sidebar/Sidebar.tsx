@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Building2,
@@ -18,10 +18,17 @@ import {
   Shield,
   Contact,
   ClipboardCheck,
+  LogOut,
+  Receipt,
+  CreditCard,
+  Sliders,
+  Gauge,
+  TrendingUp,
 } from 'lucide-react';
 import { ROUTES } from '@/constants/routes';
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks';
 import { closeMenu } from '@/app/store/uiSlice';
+import { logout } from '@/features/auth/store/authSlice';
 
 interface NavItem {
   to: string;
@@ -34,7 +41,9 @@ interface NavItem {
 
 export const Sidebar: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { activeRole, currentUser } = useAppSelector((state) => state.auth);
+  const navigate = useNavigate();
+  const { activeRole, currentUser, user } = useAppSelector((state) => state.auth);
+  const effectiveUser = user || currentUser;
   const { bookings } = useAppSelector((state) => state.facilities);
   const { visitors } = useAppSelector((state) => state.visitors);
   const { isMenuOpen } = useAppSelector((state) => state.ui);
@@ -160,9 +169,26 @@ export const Sidebar: React.FC = () => {
         ]
       : [];
 
+  // Group 3 — Billing, Charges, Invoices & Payments
+  const financeNavItems: NavItem[] = [
+    ...(isStaffOrAdmin
+      ? [{ to: ROUTES.FINANCE_DASHBOARD, label: 'Finance Dashboard', icon: <TrendingUp size={20} /> }]
+      : []),
+    { to: ROUTES.INVOICES, label: 'Invoices', icon: <FileText size={20} /> },
+    { to: ROUTES.PAYMENTS, label: 'Payments', icon: <CreditCard size={20} /> },
+    { to: ROUTES.RECEIPTS, label: 'Receipts', icon: <Receipt size={20} /> },
+    ...(isStaffOrAdmin
+      ? [
+          { to: ROUTES.CHARGES, label: 'Charge Rules', icon: <Sliders size={20} /> },
+          { to: ROUTES.UTILITIES, label: 'Utility Metering', icon: <Gauge size={20} /> },
+        ]
+      : []),
+  ];
+
   const navSections: { heading: string; items: NavItem[] }[] = [
     { heading: isStaffOrAdmin ? 'Administration & Oversight' : 'My Community Access', items: navItems },
     { heading: 'My Account', items: accountNavItems },
+    { heading: 'Finance & Billing', items: financeNavItems },
     { heading: 'Identity & Access', items: identityAdminNavItems },
   ].filter((section) => section.items.length > 0);
 
@@ -463,7 +489,7 @@ export const Sidebar: React.FC = () => {
             flexShrink: 0,
           }}
         >
-          {currentUser.name
+          {effectiveUser.name
             .split(' ')
             .map((n) => n[0])
             .join('')}
@@ -479,15 +505,45 @@ export const Sidebar: React.FC = () => {
               overflow: 'hidden',
             }}
           >
-            {currentUser.name}
+            {effectiveUser.name}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginTop: '2px' }}>
             <UserCheck size={12} color={getRoleColor()} />
             <span style={{ fontSize: '0.6875rem', color: '#CBD5E1', fontWeight: 500 }}>
-              {currentUser.unitId || `${activeRole} Office`}
+              {effectiveUser.unitId || `${activeRole} Office`}
             </span>
           </div>
         </div>
+        <button
+          type="button"
+          title="Sign Out"
+          onClick={() => {
+            dispatch(logout());
+            navigate(ROUTES.LOGIN);
+          }}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: 'rgba(255, 255, 255, 0.55)',
+            cursor: 'pointer',
+            padding: '0.4rem',
+            borderRadius: '6px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all var(--transition-fast)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = '#EF4444';
+            e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.15)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = 'rgba(255, 255, 255, 0.55)';
+            e.currentTarget.style.backgroundColor = 'transparent';
+          }}
+        >
+          <LogOut size={16} />
+        </button>
       </div>
     </aside>
   );

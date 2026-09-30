@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, CalendarDays, Hash, Mail, Pencil, Phone, User } from 'lucide-react';
+import { ArrowLeft, CalendarDays, Hash, Mail, Pencil, Phone, User, KeyRound } from 'lucide-react';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -84,6 +84,18 @@ export const UserDetailPage: React.FC = () => {
                   {ACCOUNT_STATUS_CONFIG[user.status].description}
                 </ProfileField>
                 <ProfileField label="Created" icon={<CalendarDays size={15} />}>{formatDate(user.createdAt)}</ProfileField>
+                {user.temporaryPassword && (
+                  <ProfileField label="Temporary Password" icon={<KeyRound size={15} />}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--color-accent)' }}>
+                        {user.temporaryPassword}
+                      </span>
+                      <Badge variant="warning" size="sm">
+                        One-Time Pass (Pending First Login)
+                      </Badge>
+                    </div>
+                  </ProfileField>
+                )}
                 <ProfileField label="User ID" icon={<Hash size={15} />}>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8125rem' }}>{user.id}</span>
                 </ProfileField>

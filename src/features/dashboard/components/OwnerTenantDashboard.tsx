@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { ROUTES } from '@/constants/routes';
-import { UserCheck, Users, Building, ShieldCheck } from 'lucide-react';
+import { UserCheck, Users, Building, ShieldCheck, KeyRound, FileText } from 'lucide-react';
 import type { User as UserType } from '@/features/auth/store/authSlice';
 
 interface OwnerTenantDashboardProps {
@@ -17,8 +17,8 @@ export const OwnerTenantDashboard: React.FC<OwnerTenantDashboardProps> = ({ user
 
   return (
     <PageContainer
-      title="Owner & Tenant Management Portal"
-      subtitle={`Welcome back, ${user?.name || 'Property Owner/Tenant'}. Overview of property ownership records and resident directory.`}
+      title="Property Owner Portal"
+      subtitle={`Welcome back, ${user?.name || 'Property Owner'}. Overview of your property ownership records, registered unit holdings, and tenant leases.`}
     >
       {/* Metric Cards Grid */}
       <div
@@ -36,7 +36,7 @@ export const OwnerTenantDashboard: React.FC<OwnerTenantDashboardProps> = ({ user
                 Account Standing
               </div>
               <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-primary)', marginTop: '4px' }}>
-                {user?.role === 'OWNER' ? 'Property Owner' : 'Lease Tenant'}
+                Property Owner
               </div>
             </div>
             <div
@@ -55,7 +55,7 @@ export const OwnerTenantDashboard: React.FC<OwnerTenantDashboardProps> = ({ user
             </div>
           </div>
           <div style={{ marginTop: '12px', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-            <Badge variant="accent">Status: Active</Badge>
+            <Badge variant="accent">Status: Active Owner</Badge>
           </div>
         </Card>
 
@@ -66,7 +66,7 @@ export const OwnerTenantDashboard: React.FC<OwnerTenantDashboardProps> = ({ user
                 Property Directory
               </div>
               <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-primary)', marginTop: '4px' }}>
-                Registered
+                Verified
               </div>
             </div>
             <div
@@ -96,7 +96,7 @@ export const OwnerTenantDashboard: React.FC<OwnerTenantDashboardProps> = ({ user
                 Access Level
               </div>
               <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-primary)', marginTop: '4px' }}>
-                Owner / Tenant
+                Owner Authority
               </div>
             </div>
             <div
@@ -115,15 +115,15 @@ export const OwnerTenantDashboard: React.FC<OwnerTenantDashboardProps> = ({ user
             </div>
           </div>
           <div style={{ marginTop: '12px', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-            <Badge variant="success">Verified Access</Badge>
+            <Badge variant="success">Verified Owner Access</Badge>
           </div>
         </Card>
       </div>
 
-      {/* Implemented Modules Overview */}
+      {/* Feature Modules Overview */}
       <Card
-        title="Owner-Tenant Feature Modules"
-        subtitle="Active modules relevant to owner and tenant management"
+        title="Owner Feature Modules"
+        subtitle="Active modules relevant to property ownership and tenant management"
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div
@@ -149,11 +149,11 @@ export const OwnerTenantDashboard: React.FC<OwnerTenantDashboardProps> = ({ user
                   justifyContent: 'center',
                 }}
               >
-                <UserCheck size={20} />
+                <KeyRound size={20} />
               </div>
               <div>
                 <strong style={{ color: 'var(--color-primary)', display: 'block' }}>
-                  Property Owners Directory
+                  Property Ownership Records
                 </strong>
                 <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)' }}>
                   View owner profiles, registered property holdings, and unit ownership status
@@ -161,7 +161,7 @@ export const OwnerTenantDashboard: React.FC<OwnerTenantDashboardProps> = ({ user
               </div>
             </div>
             <Button size="sm" variant="secondary" onClick={() => navigate(ROUTES.OWNERS)}>
-              View Owners
+              View Ownerships
             </Button>
           </div>
 
@@ -188,11 +188,11 @@ export const OwnerTenantDashboard: React.FC<OwnerTenantDashboardProps> = ({ user
                   justifyContent: 'center',
                 }}
               >
-                <Users size={20} />
+                <FileText size={20} />
               </div>
               <div>
                 <strong style={{ color: 'var(--color-primary)', display: 'block' }}>
-                  Residents & Occupants Directory
+                  Tenant Leases & Occupants
                 </strong>
                 <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)' }}>
                   Inspect building resident listings, unit assignments, and active leases
@@ -234,7 +234,7 @@ export const OwnerTenantDashboard: React.FC<OwnerTenantDashboardProps> = ({ user
                   My Profile & Security Settings
                 </strong>
                 <div style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted)' }}>
-                  View corporate email, user ID, and active security clearance
+                  View account credentials, user ID, and active security clearance
                 </div>
               </div>
             </div>

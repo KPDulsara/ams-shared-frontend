@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   User,
   Bell,
   ChevronDown,
+  ChevronRight,
   Check,
   Building,
   ShieldCheck,
@@ -17,9 +18,12 @@ import {
   MapPin,
   Trash2,
   Info,
+  LogOut,
+  Mail,
+  KeyRound,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks';
-import { switchUserById } from '@/features/auth/store/authSlice';
+import { logout } from '@/features/auth/store/authSlice';
 import { toggleMenu } from '@/app/store/uiSlice';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
@@ -155,10 +159,45 @@ const mapBackendToAppNotification = (bn: BackendNotification): AppNotification =
 export const Header: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { currentUser, availableUsers, activeRole } = useAppSelector((state) => state.auth);
+  const { currentUser, user, activeRole } = useAppSelector((state) => state.auth);
   const { isMenuOpen } = useAppSelector((state) => state.ui);
   const { isMobile, isSmallMobile } = useIsMobile();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleMouseEnter = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    setIsDropdownOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setIsDropdownOpen(false);
+    }, 250);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const effectiveUser = user || currentUser;
+  const userName = effectiveUser?.name || 'Authorized User';
+  const userEmail = (effectiveUser as { email?: string })?.email || 'user@ams.internal';
+  const userUnit = effectiveUser?.unitId;
+  const userInitials = userName
+    .split(' ')
+    .filter(Boolean)
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase() || 'U';
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [notifications, setNotifications] = useState<AppNotification[]>(INITIAL_NOTIFICATIONS);
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'UNREAD'>('ALL');
@@ -847,166 +886,354 @@ export const Header: React.FC = () => {
           </Modal>
         )}
 
-        {/* User Persona Switcher */}
-        <div style={{ position: 'relative' }}>
+        {/* User Profile Pill & Popup */}
+        <div
+          style={{ position: 'relative' }}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
           <button
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            title={`Active User: ${currentUser.name} (${activeRole})`}
-            aria-label="User Persona Switcher"
+            type="button"
+            onClick={() => setIsDropdownOpen((prev) => !prev)}
+            title={`Active User: ${userName} (${activeRole})`}
+            aria-label="User Profile Details"
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: isMobile ? '0.35rem' : '0.75rem',
-              padding: isMobile ? '0.35rem 0.5rem' : '0.4rem 0.75rem',
-              borderRadius: 'var(--radius-lg)',
-              border: '1px solid var(--color-border)',
-              backgroundColor: 'var(--color-surface)',
+              gap: isMobile ? '0.35rem' : '0.625rem',
+              padding: isMobile ? '0.35rem 0.5rem' : '0.35rem 0.75rem',
+              borderRadius: 'var(--radius-lg, 12px)',
+              border: `1px solid ${isDropdownOpen ? 'var(--color-primary, #1E3A5F)' : 'var(--color-border)'}`,
+              backgroundColor: isDropdownOpen ? 'var(--color-surface-hover, #F8FAFC)' : 'var(--color-surface, #FFFFFF)',
               cursor: 'pointer',
-              transition: 'all var(--transition-fast)',
-              boxShadow: 'var(--shadow-xs)',
+              transition: 'all var(--transition-fast, 150ms)',
+              boxShadow: isDropdownOpen ? 'var(--shadow-sm)' : 'var(--shadow-xs)',
               flexShrink: 0,
             }}
           >
-            <div
-              style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '50%',
-                backgroundColor: 'var(--color-primary)',
-                color: '#FFFFFF',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 700,
-                fontSize: '0.8125rem',
-                flexShrink: 0,
-              }}
-            >
-              {currentUser.name
-                .split(' ')
-                .map((n) => n[0])
-                .join('')}
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+              <div
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  backgroundColor:
+                    activeRole === 'ADMIN'
+                      ? 'var(--color-primary, #1E3A5F)'
+                      : activeRole === 'STAFF'
+                      ? 'var(--color-secondary, #0369A1)'
+                      : activeRole === 'OWNER'
+                      ? '#7C3AED'
+                      : 'var(--color-accent, #0D9488)',
+                  color: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 700,
+                  fontSize: '0.75rem',
+                  letterSpacing: '0.02em',
+                }}
+              >
+                {userInitials}
+              </div>
+              <span
+                style={{
+                  position: 'absolute',
+                  bottom: '-1px',
+                  right: '-1px',
+                  width: '9px',
+                  height: '9px',
+                  borderRadius: '50%',
+                  backgroundColor: '#10B981',
+                  border: '2px solid #FFFFFF',
+                }}
+              />
             </div>
+
             {!isMobile && (
               <div style={{ textAlign: 'left', lineHeight: 1.25 }}>
-                <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--color-text)' }}>
-                  {currentUser.name}
+                <div
+                  style={{
+                    fontSize: '0.8125rem',
+                    fontWeight: 700,
+                    color: 'var(--color-text)',
+                    maxWidth: '130px',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  {userName}
                 </div>
                 <div style={{ fontSize: '0.6875rem', color: 'var(--color-text-muted)' }}>
                   Role: <span style={{ fontWeight: 700, color: 'var(--color-accent)' }}>{activeRole}</span>
                 </div>
               </div>
             )}
-            <ChevronDown size={14} color="var(--color-text-muted)" />
+
+            <ChevronDown
+              size={14}
+              color="var(--color-text-muted)"
+              style={{
+                transition: 'transform 200ms ease',
+                transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+              }}
+            />
           </button>
 
           {isDropdownOpen && (
-            <>
-              <div
-                style={{ position: 'fixed', inset: 0, zIndex: 90 }}
-                onClick={() => setIsDropdownOpen(false)}
-              />
+            <div
+              style={{
+                position: 'absolute',
+                right: 0,
+                marginTop: '0.5rem',
+                width: isMobile ? '280px' : '310px',
+                maxWidth: 'calc(100vw - 1.5rem)',
+                backgroundColor: 'var(--color-surface, #FFFFFF)',
+                borderRadius: '16px',
+                boxShadow: '0 12px 36px -4px rgba(15, 23, 42, 0.16), 0 4px 12px -2px rgba(15, 23, 42, 0.08)',
+                border: '1px solid var(--color-border)',
+                zIndex: 100,
+                overflow: 'hidden',
+                animation: 'fadeInScale 150ms ease-out',
+              }}
+            >
+              {/* Profile Card Header */}
               <div
                 style={{
-                  position: 'absolute',
-                  right: 0,
-                  marginTop: '0.5rem',
-                  width: isMobile ? '280px' : '300px',
-                  maxWidth: 'calc(100vw - 1.5rem)',
-                  backgroundColor: 'var(--color-surface)',
-                  borderRadius: 'var(--radius-lg)',
-                  boxShadow: 'var(--shadow-xl)',
-                  border: '1px solid var(--color-border)',
-                  zIndex: 100,
-                  overflow: 'hidden',
-                  animation: 'fadeInScale 150ms ease-out',
+                  padding: '1.125rem 1rem 0.875rem',
+                  background: 'linear-gradient(135deg, rgba(30, 58, 95, 0.08) 0%, rgba(56, 189, 248, 0.12) 100%)',
+                  borderBottom: '1px solid var(--color-border-subtle)',
                 }}
               >
-                <div
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ position: 'relative', flexShrink: 0 }}>
+                    <div
+                      style={{
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '50%',
+                        backgroundColor:
+                          activeRole === 'ADMIN'
+                            ? 'var(--color-primary, #1E3A5F)'
+                            : activeRole === 'STAFF'
+                            ? 'var(--color-secondary, #0369A1)'
+                            : activeRole === 'OWNER'
+                            ? '#7C3AED'
+                            : 'var(--color-accent, #0D9488)',
+                        color: '#FFFFFF',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 800,
+                        fontSize: '1rem',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                      }}
+                    >
+                      {userInitials}
+                    </div>
+                    <span
+                      style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        right: 0,
+                        width: '11px',
+                        height: '11px',
+                        borderRadius: '50%',
+                        backgroundColor: '#10B981',
+                        border: '2px solid #FFFFFF',
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ overflow: 'hidden', flex: 1 }}>
+                    <div
+                      style={{
+                        fontSize: '0.9375rem',
+                        fontWeight: 800,
+                        color: 'var(--color-text)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {userName}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: '0.75rem',
+                        color: 'var(--color-text-muted)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        marginTop: '2px',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      <Mail size={12} style={{ flexShrink: 0 }} />
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{userEmail}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.75rem' }}>
+                  <Badge variant={getRoleBadgeVariant(activeRole)} size="sm">
+                    {activeRole}
+                  </Badge>
+                  <span
+                    style={{
+                      fontSize: '0.6875rem',
+                      fontWeight: 600,
+                      color: '#059669',
+                      backgroundColor: '#ECFDF5',
+                      padding: '0.125rem 0.5rem',
+                      borderRadius: '999px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      border: '1px solid #A7F3D0',
+                    }}
+                  >
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981' }} />
+                    Active Account
+                  </span>
+                </div>
+              </div>
+
+              {/* Account Details & Role Info */}
+              <div style={{ padding: '0.75rem 1rem', backgroundColor: 'var(--color-surface-hover, #F8FAFC)', borderBottom: '1px solid var(--color-border-subtle)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', fontSize: '0.75rem' }}>
+                  {userUnit && (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <Building size={13} /> Unit / Office
+                      </span>
+                      <span style={{ fontWeight: 600, color: 'var(--color-text)' }}>{userUnit}</span>
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <ShieldCheck size={13} /> Clearance
+                    </span>
+                    <span style={{ fontWeight: 600, color: 'var(--color-text)' }}>
+                      {activeRole === 'ADMIN'
+                        ? 'System Administrator'
+                        : activeRole === 'STAFF'
+                        ? 'Operations Staff'
+                        : activeRole === 'OWNER'
+                        ? 'Property Owner'
+                        : 'Resident Portal'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Navigation Links */}
+              <div style={{ padding: '0.375rem 0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate(ROUTES.PROFILE);
+                    setIsDropdownOpen(false);
+                  }}
                   style={{
-                    padding: '0.75rem 1rem',
-                    backgroundColor: 'var(--color-surface-hover)',
-                    borderBottom: '1px solid var(--color-border-subtle)',
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    color: 'var(--color-secondary)',
-                    letterSpacing: '0.06em',
+                    width: '100%',
+                    padding: '0.5rem 0.625rem',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
+                    borderRadius: '8px',
+                    border: 'none',
+                    backgroundColor: 'transparent',
+                    color: 'var(--color-text)',
+                    fontSize: '0.8125rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'background var(--transition-fast)',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--color-surface-hover, #F1F5F9)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                    <User size={15} color="var(--color-accent)" />
+                    My Profile
+                  </span>
+                  <ChevronRight size={14} color="var(--color-text-muted)" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate(ROUTES.PROFILE_CHANGE_PASSWORD);
+                    setIsDropdownOpen(false);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem 0.625rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    borderRadius: '8px',
+                    border: 'none',
+                    backgroundColor: 'transparent',
+                    color: 'var(--color-text)',
+                    fontSize: '0.8125rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'background var(--transition-fast)',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--color-surface-hover, #F1F5F9)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                    <KeyRound size={15} color="var(--color-accent)" />
+                    Security & Password
+                  </span>
+                  <ChevronRight size={14} color="var(--color-text-muted)" />
+                </button>
+              </div>
+
+              {/* Sign Out Action Button */}
+              <div style={{ padding: '0.5rem', borderTop: '1px solid var(--color-border-subtle)', backgroundColor: '#FAFAFA' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    dispatch(logout());
+                    navigate(ROUTES.LOGIN);
+                    setIsDropdownOpen(false);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '0.55rem 0.75rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(239, 68, 68, 0.25)',
+                    backgroundColor: '#FEF2F2',
+                    color: '#DC2626',
+                    fontWeight: 700,
+                    fontSize: '0.8125rem',
+                    cursor: 'pointer',
+                    transition: 'all var(--transition-fast)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#FEE2E2';
+                    e.currentTarget.style.borderColor = '#EF4444';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#FEF2F2';
+                    e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.25)';
                   }}
                 >
-                  <span>Select Active Persona</span>
-                  <ShieldCheck size={14} color="var(--color-accent)" />
-                </div>
-                {availableUsers.map((user) => (
-                  <button
-                    key={user.id}
-                    onClick={() => {
-                      dispatch(switchUserById(user.id));
-                      setIsDropdownOpen(false);
-                    }}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                      backgroundColor: user.id === currentUser.id ? 'var(--color-surface-sunken)' : 'transparent',
-                      borderBottom: '1px solid var(--color-border-subtle)',
-                      transition: 'background var(--transition-fast)',
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--color-surface-hover)')}
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.backgroundColor =
-                        user.id === currentUser.id ? 'var(--color-surface-sunken)' : 'transparent')
-                    }
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <div
-                        style={{
-                          width: '32px',
-                          height: '32px',
-                          borderRadius: '50%',
-                          backgroundColor:
-                            user.role === 'ADMIN'
-                              ? 'var(--color-primary)'
-                              : user.role === 'STAFF'
-                              ? 'var(--color-secondary)'
-                              : 'var(--color-accent)',
-                          color: '#FFFFFF',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontWeight: 700,
-                          fontSize: '0.75rem',
-                        }}
-                      >
-                        {user.name
-                          .split(' ')
-                          .map((n) => n[0])
-                          .join('')}
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--color-text)' }}>
-                          {user.name}
-                        </div>
-                        <div style={{ fontSize: '0.6875rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '0.375rem', marginTop: '1px' }}>
-                          <Badge variant={getRoleBadgeVariant(user.role)} size="sm">
-                            {user.role}
-                          </Badge>
-                          {user.unitId && <span>{user.unitId}</span>}
-                        </div>
-                      </div>
-                    </div>
-                    {user.id === currentUser.id && <Check size={16} color="var(--color-accent)" />}
-                  </button>
-                ))}
+                  <LogOut size={15} />
+                  <span>Sign Out</span>
+                </button>
               </div>
-            </>
+            </div>
           )}
         </div>
       </div>

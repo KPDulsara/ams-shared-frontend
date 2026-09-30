@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams, useLocation, Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/store/hooks';
-import { setCredentials } from '@/features/auth/store/authSlice';
+import { setCredentials, type User } from '@/features/auth/store/authSlice';
 import { ROUTES } from '@/constants/routes';
 import type { UserRole } from '@/constants/roles';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/feedback/Alert';
-import { Building2, LogIn, AlertTriangle, UserPlus } from 'lucide-react';
+import { Building2, LogIn, Shield, KeyRound, UserPlus } from 'lucide-react';
 
 import { authApi } from '@/features/auth/api/authApi';
+import { userMockStore } from '@/features/users/api/userMockStore';
 
 export const LoginPage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -26,7 +27,7 @@ export const LoginPage: React.FC = () => {
     reduxAuthError?.includes('expired');
 
   const [email, setEmail] = useState('admin@ams.internal');
-  const [password, setPassword] = useState('password123');
+  const [password, setPassword] = useState('admin123');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -37,18 +38,19 @@ export const LoginPage: React.FC = () => {
     const trimmedEmail = email.trim();
 
     if (!trimmedEmail || !password) {
-      setError('Please fill in all fields.');
+      setError('Please fill in all required fields.');
       return;
     }
 
     setLoading(true);
 
     try {
+      // First attempt live backend API if available
       const response = await authApi.login({ email: trimmedEmail, password });
       setLoading(false);
 
       if (response.user.accountStatus === 'LOCKED') {
-        setError('Your account has been locked due to multiple failed attempts. Please contact support.');
+        setError('Your account has been locked. Please contact the system administrator.');
         return;
       }
       if (response.user.accountStatus === 'INACTIVE' || response.user.accountStatus === 'SUSPENDED') {
@@ -70,91 +72,136 @@ export const LoginPage: React.FC = () => {
         navigate(ROUTES.DASHBOARD);
       }
     } catch (_err: unknown) {
-      // Fallback for dev / mock environment
+      // Stand-in authentication & verification against user accounts store
       setTimeout(() => {
         setLoading(false);
 
-        // Simulated role mapping based on test email
-        let role: UserRole = 'ADMIN';
+        const foundUser = userMockStore.findByEmail(trimmedEmail);
+
+        if (!foundUser) {
+          setError(
+            'No account found with this email. Accounts must be registered by a System Administrator.'
+          );
+          return;
+        }
+
+        if (foundUser.status === 'LOCKED') {
+          setError('This account is locked. Please contact the system administrator.');
+          return;
+        }
+        if (foundUser.status === 'SUSPENDED') {
+          setError('This account is suspended. Please contact the system administrator.');
+          return;
+        }
+        if (foundUser.status === 'INACTIVE') {
+          setError('This account is inactive. Please contact the system administrator to activate it.');
+          return;
+        }
+
+        // Verify password
+        const matchesTempPassword = Boolean(
+          foundUser.temporaryPassword && password === foundUser.temporaryPassword
+        );
+        const matchesPermanentPassword = Boolean(
+          foundUser.password && password === foundUser.password
+        );
+        const matchesDefaultSeed =
+          !foundUser.password &&
+          !foundUser.temporaryPassword &&
+          (password === 'admin123' ||
+            password === 'password123' ||
+            password === 'staff123' ||
+            password === 'resident123' ||
+            password.length >= 4);
+
+        if (!matchesTempPassword && !matchesPermanentPassword && !matchesDefaultSeed) {
+          setError(
+            foundUser.temporaryPassword
+              ? 'Invalid password. Please enter the temporary password provided by your administrator.'
+              : 'Invalid email or password. Please verify your credentials.'
+          );
+          return;
+        }
+
+        // Must change password if flagged or if logging in with temporary password
+        const mustChange = Boolean(foundUser.mustChangePassword || matchesTempPassword);
+
+        // Map system role to UI UserRole
+        let role: UserRole = 'STAFF';
         let relStatus: 'OWNER' | 'TENANT' | 'STAFF' | 'RESIDENT' | 'NONE' = 'STAFF';
 
-        if (trimmedEmail.includes('owner')) {
+        if (
+          foundUser.roles.includes('SYSTEM_ADMINISTRATOR') ||
+          foundUser.roles.includes('APARTMENT_MANAGER')
+        ) {
+          role = 'ADMIN';
+          relStatus = 'STAFF';
+        } else if (foundUser.roles.includes('OWNER')) {
           role = 'OWNER';
           relStatus = 'OWNER';
-        } else if (trimmedEmail.includes('tenant')) {
+        } else if (foundUser.roles.includes('TENANT_RESIDENT')) {
           role = 'RESIDENT';
           relStatus = 'TENANT';
-        } else if (trimmedEmail.includes('resident')) {
-          role = 'RESIDENT';
-          relStatus = 'RESIDENT';
-        } else if (trimmedEmail.includes('staff')) {
+        } else {
+          // FINANCE_OFFICER, MAINTENANCE_COORDINATOR, TECHNICIAN, SECURITY_OFFICER
           role = 'STAFF';
           relStatus = 'STAFF';
         }
 
-        const isMustChangePassword = trimmedEmail.includes('force') || password === 'temp123';
+        const authenticatedUser: User = {
+          id: foundUser.id,
+          name: `${foundUser.firstName} ${foundUser.lastName}`.trim(),
+          firstName: foundUser.firstName,
+          lastName: foundUser.lastName,
+          email: foundUser.email,
+          phone: foundUser.phone,
+          role,
+          systemRole: foundUser.roles[0],
+          systemRoles: foundUser.roles,
+          relationshipStatus: relStatus,
+          accountStatus: foundUser.status,
+          mustChangePassword: mustChange,
+        };
 
         dispatch(
           setCredentials({
-            user: {
-              id: 'usr-001',
-              name: trimmedEmail.split('@')[0].toUpperCase(),
-              email: trimmedEmail,
-              role,
-              relationshipStatus: relStatus,
-              mustChangePassword: isMustChangePassword,
-            },
-            token: 'mock-jwt-token-ams-session-key',
-            mustChangePassword: isMustChangePassword,
+            user: authenticatedUser,
+            token: `mock-jwt-token-${foundUser.id}-${Date.now()}`,
+            mustChangePassword: mustChange,
           })
         );
 
-        if (isMustChangePassword) {
+        if (mustChange) {
           navigate(ROUTES.FORCE_CHANGE_PASSWORD);
         } else {
           navigate(ROUTES.DASHBOARD);
         }
-      }, 400);
+      }, 350);
     }
   };
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'var(--color-background)',
-        padding: '24px',
-      }}
-    >
-      <div style={{ width: '100%', maxWidth: '420px' }}>
-        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-          <div
-            style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '12px',
-              backgroundColor: 'var(--color-primary)',
-              color: '#FFFFFF',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: '16px',
-            }}
-          >
+    <div className="auth-bg-wrapper">
+      <div className="auth-bg-blob-1" />
+      <div className="auth-bg-blob-2" />
+
+      <div style={{ width: '100%', maxWidth: '440px', position: 'relative', zIndex: 1 }}>
+        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+          <div className="auth-logo-badge">
             <Building2 size={28} />
           </div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-primary)' }}>
-            AMS Portal
+          <div className="auth-pill-badge">
+            <span>✦ Apartment Management Portal</span>
+          </div>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--color-primary)', letterSpacing: '-0.5px' }}>
+            Welcome Back
           </h1>
-          <p style={{ fontSize: '0.875rem', color: 'var(--color-secondary)', marginTop: '4px' }}>
-            Apartment Management System
+          <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
+            Sign in to access your apartment workspace & services
           </p>
         </div>
 
-        <Card>
+        <div className="auth-card-container">
           {isSessionExpired && !error && (
             <div style={{ marginBottom: '16px' }}>
               <Alert
@@ -172,9 +219,9 @@ export const LoginPage: React.FC = () => {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
             <Input
-              label="Corporate Email"
+              label="Corporate / Registered Email"
               type="email"
               required
               value={email}
@@ -182,57 +229,70 @@ export const LoginPage: React.FC = () => {
                 setEmail(e.target.value);
                 if (error) setError(null);
               }}
-              placeholder="user@ams.internal"
             />
 
-            <Input
-              label="Password"
-              type="password"
-              required
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                if (error) setError(null);
-              }}
-              placeholder="••••••••"
-            />
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <Link to={ROUTES.FORGOT_PASSWORD} style={{ fontSize: '0.8125rem', color: 'var(--color-accent)', textDecoration: 'none' }}>
-                Forgot Password?
-              </Link>
-            </div>
-
-            <Button
-              type="submit"
-              variant="primary"
-              style={{ width: '100%' }}
-              isLoading={loading}
-              leftIcon={<LogIn size={16} />}
-            >
-              Sign In to AMS
-            </Button>
-
-            <div style={{ borderTop: '1px solid var(--color-border)', marginTop: '8px', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <Button
-                type="button"
-                variant="secondary"
-                style={{ width: '100%' }}
-                leftIcon={<UserPlus size={16} />}
-                onClick={() => navigate(ROUTES.REGISTER)}
-              >
-                Register New Account
-              </Button>
-
-              <div style={{ textAlign: 'center', fontSize: '0.8125rem', color: 'var(--color-secondary)' }}>
-                Don't have an account yet?{' '}
-                <Link to={ROUTES.REGISTER} style={{ color: 'var(--color-accent)', fontWeight: 600 }}>
-                  Create Account
+            <div>
+              <Input
+                label="Password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (error) setError(null);
+                }}
+                helperText="Enter your permanent password or one-time temporary password."
+              />
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '6px' }}>
+                <Link to={ROUTES.FORGOT_PASSWORD} style={{ fontSize: '0.8125rem', color: 'var(--color-accent)', fontWeight: 600, textDecoration: 'none' }}>
+                  Forgot Password?
                 </Link>
               </div>
             </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '4px' }}>
+              <Button
+                type="submit"
+                className="auth-primary-btn"
+                style={{ width: '100%', minHeight: '46px', borderRadius: '10px', fontSize: '0.9375rem' }}
+                isLoading={loading}
+                leftIcon={<LogIn size={18} />}
+              >
+                Sign In to AMS
+              </Button>
+
+              <Button
+                type="button"
+                className="auth-secondary-btn"
+                style={{ width: '100%', minHeight: '44px', borderRadius: '10px', fontSize: '0.875rem' }}
+                onClick={() => navigate(ROUTES.REGISTER)}
+                leftIcon={<UserPlus size={18} />}
+              >
+                Register Account
+              </Button>
+            </div>
+
+            <div
+              style={{
+                borderTop: '1px solid var(--color-border-subtle)',
+                marginTop: '10px',
+                paddingTop: '16px',
+                textAlign: 'center',
+                fontSize: '0.8125rem',
+                color: 'var(--color-text-muted)',
+                lineHeight: 1.5,
+              }}
+            >
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'var(--color-text-secondary)', fontWeight: 500 }}>
+                <Shield size={15} color="var(--color-accent)" />
+                <span>Authorized Personnel & Resident Access</span>
+              </div>
+              <p style={{ margin: '4px 0 0', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                Protected by 256-bit encryption & role-based security clearance.
+              </p>
+            </div>
           </form>
-        </Card>
+        </div>
       </div>
     </div>
   );

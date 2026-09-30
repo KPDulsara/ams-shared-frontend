@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, UserPlus } from 'lucide-react';
+import { Save, UserPlus, KeyRound, RefreshCw, Copy, Check } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
@@ -10,6 +10,15 @@ import { getFullName } from '../utils/userFormat';
 import type { AccountStatus, UserFormValues } from '../types/user.types';
 import { RoleSelector } from './RoleSelector';
 
+export const generateTempPassword = (): string => {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return `AMS#${code}`;
+};
+
 export const EMPTY_USER_FORM: UserFormValues = {
   firstName: '',
   lastName: '',
@@ -17,6 +26,7 @@ export const EMPTY_USER_FORM: UserFormValues = {
   phone: '',
   roles: [],
   status: DEFAULT_ACCOUNT_STATUS,
+  temporaryPassword: '',
 };
 
 const STATUS_OPTIONS = ACCOUNT_STATUSES.map((status) => ({
@@ -42,18 +52,38 @@ export const UserForm: React.FC<UserFormProps> = ({
   onSubmit,
   onCancel,
 }) => {
-  const [values, setValues] = useState<UserFormValues>(initialValues);
-  const [errors, setErrors] = useState<FieldErrors<UserFormValues>>({});
   const isCreate = mode === 'create';
+  const [values, setValues] = useState<UserFormValues>(() => {
+    if (isCreate && !initialValues.temporaryPassword) {
+      return {
+        ...initialValues,
+        temporaryPassword: generateTempPassword(),
+      };
+    }
+    return initialValues;
+  });
+  const [errors, setErrors] = useState<FieldErrors<UserFormValues>>({});
+  const [copied, setCopied] = useState(false);
 
   const setField = <K extends keyof UserFormValues>(field: K, value: UserFormValues[K]) => {
     setValues((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
 
+  const handleCopyPassword = () => {
+    if (values.temporaryPassword) {
+      navigator.clipboard.writeText(values.temporaryPassword);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const validation = validateUserForm(values, { requireRole: isCreate });
+    if (isCreate && (!values.temporaryPassword || values.temporaryPassword.trim().length < 6)) {
+      validation.temporaryPassword = 'Temporary password must be at least 6 characters.';
+    }
     setErrors(validation);
     if (!hasErrors(validation)) onSubmit(values);
   };
@@ -111,7 +141,7 @@ export const UserForm: React.FC<UserFormProps> = ({
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
         <Input
-          label="Email"
+          label="Corporate / Personal Email"
           type="email"
           required
           value={values.email}
@@ -135,6 +165,73 @@ export const UserForm: React.FC<UserFormProps> = ({
           helperText="Optional."
         />
       </div>
+
+      {isCreate && (
+        <div
+          style={{
+            padding: '1.25rem',
+            borderRadius: 'var(--radius-md)',
+            backgroundColor: 'rgba(13, 148, 136, 0.05)',
+            border: '1.5px solid rgba(13, 148, 136, 0.25)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.875rem',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <KeyRound size={20} color="var(--color-accent)" />
+              <span style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--color-primary)' }}>
+                Temporary Password (One-Time Login)
+              </span>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              leftIcon={<RefreshCw size={14} />}
+              onClick={() => setField('temporaryPassword', generateTempPassword())}
+              disabled={isSubmitting}
+            >
+              Generate New
+            </Button>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+            <div style={{ flex: 1 }}>
+              <Input
+                label=""
+                value={values.temporaryPassword || ''}
+                onChange={(e) => setField('temporaryPassword', e.target.value)}
+                error={errors.temporaryPassword}
+                placeholder="e.g. AMS#8A9B2C"
+                disabled={isSubmitting}
+                style={{
+                  fontFamily: 'Consolas, Monaco, monospace',
+                  fontWeight: 700,
+                  fontSize: '1rem',
+                  letterSpacing: '1px',
+                  color: 'var(--color-primary)',
+                }}
+              />
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              leftIcon={copied ? <Check size={16} color="#10B981" /> : <Copy size={16} />}
+              onClick={handleCopyPassword}
+              disabled={isSubmitting || !values.temporaryPassword}
+              style={{ minHeight: '42px', flexShrink: 0 }}
+            >
+              {copied ? 'Copied!' : 'Copy'}
+            </Button>
+          </div>
+
+          <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--color-text-muted)', lineHeight: 1.4 }}>
+            Provide this temporary password along with their email to the newly registered member or officer. Upon their first login, they will be prompted to set their own permanent password.
+          </p>
+        </div>
+      )}
 
       <Select
         label="Account Status"

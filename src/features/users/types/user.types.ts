@@ -23,6 +23,9 @@ export interface UserAccount {
   createdAt: string;
   /** Set while an email change is waiting for verification. */
   pendingEmail?: string;
+  password?: string;
+  temporaryPassword?: string;
+  mustChangePassword?: boolean;
 }
 
 export interface UserFormValues {
@@ -32,6 +35,7 @@ export interface UserFormValues {
   phone: string;
   roles: SystemRole[];
   status: AccountStatus;
+  temporaryPassword?: string;
 }
 
 export type CreateUserRequest = UserFormValues;

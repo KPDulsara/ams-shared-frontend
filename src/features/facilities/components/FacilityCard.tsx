@@ -32,7 +32,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
       style={{
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'space-between',
+        height: '100%',
         transition: 'transform var(--transition-fast), box-shadow var(--transition-fast)',
       }}
     >
@@ -62,19 +62,23 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
       </div>
 
       {/* Main Info */}
-      <div style={{ padding: '0 1.25rem 1rem' }}>
+      <div style={{ padding: '0 1.25rem 1.25rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
         <h3
           style={{
             fontSize: '1.125rem',
             fontWeight: 700,
             color: 'var(--color-primary)',
             marginBottom: '0.75rem',
+            lineHeight: 1.35,
+            minHeight: '3rem',
+            display: 'flex',
+            alignItems: 'flex-start',
           }}
         >
           {facility.name}
         </h3>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.8125rem', color: 'var(--color-text-secondary)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.8125rem', color: 'var(--color-text-secondary)', marginTop: 'auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <MapPin size={15} color="var(--color-secondary)" />
             <span>{facility.location}</span>
@@ -112,6 +116,9 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
           justifyContent: 'space-between',
           alignItems: 'center',
           gap: '0.5rem',
+          marginTop: 'auto',
+          borderBottomLeftRadius: 'var(--radius-lg, 12px)',
+          borderBottomRightRadius: 'var(--radius-lg, 12px)',
         }}
       >
         {isAdmin ? (
