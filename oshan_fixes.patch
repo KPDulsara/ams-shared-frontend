@@ -1,0 +1,455 @@
+diff --git a/src/features/billing/api/billingApi.ts b/src/features/billing/api/billingApi.ts
+index 7045663..962635a 100644
+--- a/src/features/billing/api/billingApi.ts
++++ b/src/features/billing/api/billingApi.ts
+@@ -70,7 +70,7 @@ export const billingApi = {
+     return res.data;
+   },
+ 
+-  getInvoiceById: async (invoiceId: number): Promise<Invoice> => {
++  getInvoiceById: async (invoiceId: string): Promise<Invoice> => {
+     const res = await apiClient.get<ApiResponse<Invoice>>(`/invoices/${invoiceId}`);
+     return res.data.data;
+   },
+@@ -85,12 +85,12 @@ export const billingApi = {
+     return res.data.data;
+   },
+ 
+-  updateInvoiceStatus: async (invoiceId: number, data: UpdateInvoiceStatusRequest): Promise<Invoice> => {
++  updateInvoiceStatus: async (invoiceId: string, data: UpdateInvoiceStatusRequest): Promise<Invoice> => {
+     const res = await apiClient.patch<ApiResponse<Invoice>>(`/invoices/${invoiceId}/status`, data);
+     return res.data.data;
+   },
+ 
+-  getInvoiceLines: async (invoiceId: number): Promise<InvoiceLine[]> => {
++  getInvoiceLines: async (invoiceId: string): Promise<InvoiceLine[]> => {
+     const res = await apiClient.get<ApiResponse<InvoiceLine[]>>(`/invoices/${invoiceId}/lines`);
+     return res.data.data;
+   },
+@@ -154,7 +154,7 @@ export const billingApi = {
+     return res.data.data;
+   },
+ 
+-  getAdjustmentsByInvoice: async (invoiceId: number): Promise<Adjustment[]> => {
++  getAdjustmentsByInvoice: async (invoiceId: string): Promise<Adjustment[]> => {
+     const res = await apiClient.get<ApiResponse<Adjustment[]>>(`/adjustments/invoices/${invoiceId}`);
+     return res.data.data;
+   },
+diff --git a/src/features/billing/components/CreateChargeRuleModal.tsx b/src/features/billing/components/CreateChargeRuleModal.tsx
+index f1d110d..3a6fec4 100644
+--- a/src/features/billing/components/CreateChargeRuleModal.tsx
++++ b/src/features/billing/components/CreateChargeRuleModal.tsx
+@@ -15,7 +15,7 @@ interface Props {
+ 
+ export const CreateChargeRuleModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, loading }) => {
+   const [name, setName] = useState('');
+-  const [chargeType, setChargeType] = useState<ChargeType>('MANAGEMENT');
++  const [chargeType, setChargeType] = useState<ChargeType>('MANAGEMENT_FEE');
+   const [amount, setAmount] = useState('');
+   const [billingPeriod, setBillingPeriod] = useState<BillingPeriodType>('MONTHLY');
+   const [applicableToAllUnits, setApplicableToAllUnits] = useState(true);
+@@ -84,9 +84,9 @@ export const CreateChargeRuleModal: React.FC<Props> = ({ isOpen, onClose, onSubm
+                 onChange={(e) => setChargeType(e.target.value as ChargeType)}
+                 disabled={loading}
+               >
+-                <option value="MANAGEMENT">MANAGEMENT</option>
+-                <option value="PARKING">PARKING</option>
+-                <option value="FACILITY">FACILITY</option>
++                <option value="MANAGEMENT_FEE">MANAGEMENT</option>
++                <option value="PARKING_FEE">PARKING</option>
++                <option value="FACILITY_FEE">FACILITY</option>
+                 <option value="OTHER">OTHER</option>
+               </select>
+             </div>
+diff --git a/src/features/billing/components/RecordPaymentModal.tsx b/src/features/billing/components/RecordPaymentModal.tsx
+index 31afca7..7a99e8f 100644
+--- a/src/features/billing/components/RecordPaymentModal.tsx
++++ b/src/features/billing/components/RecordPaymentModal.tsx
+@@ -11,7 +11,7 @@ interface Props {
+   onClose: () => void;
+   onSubmit: (data: RecordPaymentRequest) => Promise<void>;
+   loading: boolean;
+-  defaultInvoiceId?: number;
++  defaultInvoiceId?: string; // Changed from number to string for UUID support
+   maxPayableAmount?: number;
+ }
+ 
+@@ -23,7 +23,7 @@ export const RecordPaymentModal: React.FC<Props> = ({
+   defaultInvoiceId,
+   maxPayableAmount,
+ }) => {
+-  const [invoiceId, setInvoiceId] = useState(defaultInvoiceId?.toString() || '');
++  const [invoiceId, setInvoiceId] = useState(defaultInvoiceId || '');
+   const [amount, setAmount] = useState('');
+   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
+   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('BANK_TRANSFER');
+@@ -36,14 +36,15 @@ export const RecordPaymentModal: React.FC<Props> = ({
+     e.preventDefault();
+     setError(null);
+ 
+-    const parsedInvoiceId = parseInt(invoiceId, 10);
+-    const parsedAmount = parseFloat(amount);
+-
+-    if (isNaN(parsedInvoiceId) || parsedInvoiceId <= 0) {
+-      setError('Please provide a valid numeric Invoice ID.');
++    // This automatically removes a '#' if the user accidentally pasted it
++    const trimmedInvoiceId = invoiceId.replace(/^#/, '').trim(); 
++    
++    if (!trimmedInvoiceId) {
++      setError('Please provide a valid Invoice ID.');
+       return;
+     }
+ 
++    const parsedAmount = parseFloat(amount);
+     if (isNaN(parsedAmount) || parsedAmount <= 0) {
+       setError('Payment amount must be greater than zero.');
+       return;
+@@ -62,7 +63,7 @@ export const RecordPaymentModal: React.FC<Props> = ({
+ 
+     try {
+       await onSubmit({
+-        invoiceId: parsedInvoiceId,
++        invoiceId: trimmedInvoiceId, // Passing string UUID to backend
+         amount: parsedAmount,
+         paymentDate,
+         paymentMethod,
+@@ -89,8 +90,8 @@ export const RecordPaymentModal: React.FC<Props> = ({
+           <div className="form-group">
+             <label className="form-label">Invoice ID *</label>
+             <Input
+-              type="number"
+-              placeholder="e.g. 101"
++              type="text"
++              placeholder="e.g. d22dbcd2-1ef2..."
+               value={invoiceId}
+               onChange={(e) => setInvoiceId(e.target.value)}
+               disabled={loading || !!defaultInvoiceId}
+diff --git a/src/features/billing/pages/InvoicesPage.tsx b/src/features/billing/pages/InvoicesPage.tsx
+index f53f214..8672c6f 100644
+--- a/src/features/billing/pages/InvoicesPage.tsx
++++ b/src/features/billing/pages/InvoicesPage.tsx
+@@ -9,11 +9,11 @@ import { LoadingState } from '@/components/feedback/LoadingState';
+ import { ErrorMessage } from '@/components/feedback/ErrorMessage';
+ import { EmptyState } from '@/components/ui/EmptyState';
+ import { useAppDispatch, useAppSelector } from '@/app/store/hooks';
+-import { fetchInvoices, generateInvoice } from '../store/billingSlice';
++import { fetchInvoices, generateInvoice } from '../store/billingSlice'; // <-- Imported here once
+ import { GenerateInvoiceModal } from '../components/GenerateInvoiceModal';
+ import { InvoiceDetailModal } from '../components/InvoiceDetailModal';
+ import type { Invoice, GenerateInvoiceRequest } from '../types/billing.types';
+-import './ChargeRulesPage.css'; // Shared table styles
++import './ChargeRulesPage.css';
+ 
+ export const InvoicesPage: React.FC = () => {
+   const dispatch = useAppDispatch();
+@@ -33,6 +33,10 @@ export const InvoicesPage: React.FC = () => {
+     setGenerating(true);
+     try {
+       await dispatch(generateInvoice(data)).unwrap();
++      setIsGenerateOpen(false); // Close modal on successful generation
++      dispatch(fetchInvoices({ unitId: unitFilter || undefined, status: statusFilter || undefined }));
++    } catch (err) {
++      console.error('Failed to generate invoice:', err);
+     } finally {
+       setGenerating(false);
+     }
+@@ -51,6 +55,9 @@ export const InvoicesPage: React.FC = () => {
+     }
+   };
+ 
++  // Safely ensure invoices is handled as an array
++  const invoiceList = Array.isArray(invoices) ? invoices : [];
++
+   return (
+     <PageContainer
+       title="Invoices"
+@@ -86,17 +93,17 @@ export const InvoicesPage: React.FC = () => {
+         </div>
+       </div>
+ 
+-      {invoicesLoading && !invoices.length && <LoadingState message="Loading invoices..." />}
++      {invoicesLoading && !invoiceList.length && <LoadingState message="Loading invoices..." />}
+       {invoicesError && <ErrorMessage message={invoicesError} />}
+ 
+-      {!invoicesLoading && !invoices.length && !invoicesError && (
++      {!invoicesLoading && !invoiceList.length && !invoicesError && (
+         <EmptyState
+           title="No Invoices Found"
+           description="There are currently no invoices matching your selection. Click above to generate one."
+         />
+       )}
+ 
+-      {invoices.length > 0 && (
++      {invoiceList.length > 0 && (
+         <Card className="rules-card">
+           <div className="table-responsive">
+             <table className="ams-table">
+@@ -112,7 +119,7 @@ export const InvoicesPage: React.FC = () => {
+                 </tr>
+               </thead>
+               <tbody>
+-                {invoices.map((inv) => (
++                {invoiceList.map((inv) => (
+                   <tr key={inv.id}>
+                     <td className="font-semibold">#{inv.id}</td>
+                     <td>{inv.unitId}</td>
+@@ -123,7 +130,7 @@ export const InvoicesPage: React.FC = () => {
+                         {inv.status}
+                       </Badge>
+                     </td>
+-                    <td>{new Date(inv.issuedAt).toLocaleDateString()}</td>
++                    <td>{inv.issuedAt ? new Date(inv.issuedAt).toLocaleDateString() : '-'}</td>
+                     <td>
+                       <Button
+                         variant="secondary"
+diff --git a/src/features/billing/store/billingSlice.ts b/src/features/billing/store/billingSlice.ts
+index 5be4233..59b76ef 100644
+--- a/src/features/billing/store/billingSlice.ts
++++ b/src/features/billing/store/billingSlice.ts
+@@ -130,7 +130,7 @@ export const generateInvoice = createAsyncThunk(
+ 
+ export const fetchInvoiceLines = createAsyncThunk(
+   'billing/fetchInvoiceLines',
+-  async (invoiceId: number, { rejectWithValue }) => {
++  async (invoiceId: string, { rejectWithValue }) => {
+     try {
+       const lines = await billingApi.getInvoiceLines(invoiceId);
+       return { invoiceId, lines };
+@@ -216,14 +216,33 @@ export const billingSlice = createSlice({
+       })
+       .addCase(fetchChargeRules.fulfilled, (state, action) => {
+         state.chargeRulesLoading = false;
+-        state.chargeRules = action.payload;
++        
++        const payloadData = action.payload as any;
++        const responseBody = payloadData?.data || payloadData;
++        
++        if (Array.isArray(responseBody)) {
++          state.chargeRules = responseBody;
++        } else if (responseBody && Array.isArray(responseBody.content)) {
++          state.chargeRules = responseBody.content;
++        } else {
++          state.chargeRules = [];
++        }
+       })
+       .addCase(fetchChargeRules.rejected, (state, action) => {
+         state.chargeRulesLoading = false;
+         state.chargeRulesError = action.payload as string;
+       })
+       .addCase(createChargeRule.fulfilled, (state, action) => {
+-        state.chargeRules.unshift(action.payload);
++        if (!Array.isArray(state.chargeRules)) {
++          state.chargeRules = [];
++        }
++        
++        const payloadObj = action.payload as any;
++        const newRule = payloadObj?.data || payloadObj;
++        
++        if (newRule) {
++          state.chargeRules.unshift(newRule);
++        }
+       })
+       .addCase(toggleChargeRuleStatus.fulfilled, (state, action) => {
+         const index = state.chargeRules.findIndex((r) => r.id === action.payload.id);
+@@ -240,8 +259,23 @@ export const billingSlice = createSlice({
+       })
+       .addCase(fetchInvoices.fulfilled, (state, action) => {
+         state.invoicesLoading = false;
+-        state.invoices = action.payload.data;
+-        state.invoicesPagination = action.payload.pagination;
++        const payloadData = action.payload as any;
++        const responseBody = payloadData?.data || payloadData;
++        
++        if (Array.isArray(responseBody)) {
++          state.invoices = responseBody;
++        } else if (responseBody && Array.isArray(responseBody.content)) {
++          state.invoices = responseBody.content;
++          state.invoicesPagination = {
++            page: responseBody.number ?? 0,
++            size: responseBody.size ?? 20,
++            totalElements: responseBody.totalElements ?? responseBody.content.length,
++            totalPages: responseBody.totalPages ?? 1,
++            hasNext: !responseBody.last,
++          };
++        } else {
++          state.invoices = [];
++        }
+       })
+       .addCase(fetchInvoices.rejected, (state, action) => {
+         state.invoicesLoading = false;
+@@ -251,8 +285,10 @@ export const billingSlice = createSlice({
+         if (!Array.isArray(state.invoices)) {
+           state.invoices = [];
+         }
+-        if (action.payload) {
+-          state.invoices.unshift(action.payload);
++        const payloadObj = action.payload as any;
++        const newInvoice = payloadObj?.data || payloadObj;
++        if (newInvoice) {
++          state.invoices.unshift(newInvoice);
+         }
+       })
+       .addCase(fetchInvoiceLines.fulfilled, (state, action) => {
+@@ -269,14 +305,32 @@ export const billingSlice = createSlice({
+       })
+       .addCase(fetchPayments.fulfilled, (state, action) => {
+         state.paymentsLoading = false;
+-        state.payments = action.payload;
++        const payloadData = action.payload as any;
++        const responseBody = payloadData?.data || payloadData;
++        
++        if (Array.isArray(responseBody)) {
++          state.payments = responseBody;
++        } else if (responseBody && Array.isArray(responseBody.content)) {
++          state.payments = responseBody.content;
++        } else {
++          state.payments = [];
++        }
+       })
+       .addCase(fetchPayments.rejected, (state, action) => {
+         state.paymentsLoading = false;
+         state.paymentsError = action.payload as string;
+       })
+       .addCase(recordPayment.fulfilled, (state, action) => {
+-        state.payments.unshift(action.payload);
++        if (!Array.isArray(state.payments)) {
++          state.payments = [];
++        }
++        
++        const payloadObj = action.payload as any;
++        const newPayment = payloadObj?.data || payloadObj;
++        
++        if (newPayment) {
++          state.payments.unshift(newPayment);
++        }
+       });
+ 
+     // Receipts
+@@ -287,7 +341,16 @@ export const billingSlice = createSlice({
+       })
+       .addCase(fetchReceiptsByUnit.fulfilled, (state, action) => {
+         state.receiptsLoading = false;
+-        state.receipts = action.payload;
++        const payloadData = action.payload as any;
++        const responseBody = payloadData?.data || payloadData;
++        
++        if (Array.isArray(responseBody)) {
++          state.receipts = responseBody;
++        } else if (responseBody && Array.isArray(responseBody.content)) {
++          state.receipts = responseBody.content;
++        } else {
++          state.receipts = [];
++        }
+       })
+       .addCase(fetchReceiptsByUnit.rejected, (state, action) => {
+         state.receiptsLoading = false;
+diff --git a/src/features/billing/types/billing.types.ts b/src/features/billing/types/billing.types.ts
+index f0f4690..4e293be 100644
+--- a/src/features/billing/types/billing.types.ts
++++ b/src/features/billing/types/billing.types.ts
+@@ -42,12 +42,12 @@ export interface ApiErrorResponse {
+ // ---------------------------------------------------------------------------
+ // Charge Rules
+ // ---------------------------------------------------------------------------
+-export type ChargeType = 'MANAGEMENT' | 'PARKING' | 'FACILITY' | 'OTHER';
++export type ChargeType = 'MANAGEMENT_FEE' | 'PARKING_FEE' | 'FACILITY_FEE' | 'OTHER';
+ export type ChargeRuleStatus = 'ACTIVE' | 'INACTIVE';
+ export type BillingPeriodType = 'MONTHLY' | 'QUARTERLY';
+ 
+ export interface ChargeRule {
+-  id: number;
++  id: string; // Changed to string for UUID
+   name: string;
+   chargeType: ChargeType;
+   amount: number;
+@@ -77,8 +77,8 @@ export interface UpdateChargeRuleStatusRequest {
+ export type InvoiceStatus = 'ISSUED' | 'PARTIALLY_PAID' | 'PAID' | 'OVERDUE' | 'CANCELLED';
+ 
+ export interface InvoiceLine {
+-  id: number;
+-  chargeRuleId?: number;
++  id: string; // Changed to string
++  chargeRuleId?: string; // Changed to string
+   chargeRuleName: string; // Snapshot
+   chargeType: string;     // Snapshot
+   amount: number;         // Fixed snapshot at generation time
+@@ -86,7 +86,7 @@ export interface InvoiceLine {
+ }
+ 
+ export interface Invoice {
+-  id: number;
++  id: string; // Changed to string for UUID
+   unitId: string;
+   residentId: string;
+   billingPeriod: string;
+@@ -117,8 +117,8 @@ export type PaymentMethod = 'BANK_TRANSFER' | 'CARD' | 'CASH' | 'CHEQUE';
+ export type PaymentStatus = 'PENDING' | 'CONFIRMED' | 'REJECTED';
+ 
+ export interface Payment {
+-  id: number;
+-  invoiceId: number;
++  id: string; // Changed to string
++  invoiceId: string; // Changed to string
+   amount: number;
+   paymentDate: string;
+   paymentMethod: PaymentMethod;
+@@ -129,7 +129,7 @@ export interface Payment {
+ }
+ 
+ export interface RecordPaymentRequest {
+-  invoiceId: number;
++  invoiceId: string; // Changed to string
+   amount: number;
+   paymentDate: string;
+   paymentMethod: PaymentMethod;
+@@ -145,8 +145,8 @@ export interface UpdatePaymentStatusRequest {
+ // Receipts (Immutable)
+ // ---------------------------------------------------------------------------
+ export interface Receipt {
+-  id: number;
+-  paymentId: number;
++  id: string; // Changed to string
++  paymentId: string; // Changed to string
+   unitId: string;
+   billingPeriod: string;
+   amountPaid: number;
+@@ -162,8 +162,8 @@ export interface Receipt {
+ export type AdjustmentType = 'CREDIT' | 'DEBIT';
+ 
+ export interface Adjustment {
+-  id: number;
+-  invoiceId: number;
++  id: string; // Changed to string
++  invoiceId: string; // Changed to string
+   adjustmentType: AdjustmentType;
+   amount: number;
+   reason: string; // Minimum 10 chars enforced
+@@ -172,7 +172,7 @@ export interface Adjustment {
+ }
+ 
+ export interface CreateAdjustmentRequest {
+-  invoiceId: number;
++  invoiceId: string; // Changed to string
+   adjustmentType: AdjustmentType;
+   amount: number;
+   reason: string;
+diff --git a/src/features/utilities/api/utilityApi.ts b/src/features/utilities/api/utilityApi.ts
+index bbe6f50..5ae4516 100644
+--- a/src/features/utilities/api/utilityApi.ts
++++ b/src/features/utilities/api/utilityApi.ts
+@@ -9,7 +9,6 @@ import type {
+ } from '../types/utility.types';
+ 
+ export const utilityApi = {
+-  // Utility Rates (UTIL-001 to UTIL-005)
+   createRate: async (data: CreateUtilityRateRequest): Promise<UtilityRate> => {
+     const res = await apiClient.post<ApiResponse<UtilityRate>>('/utility-rates', data);
+     return res.data.data;
+@@ -25,7 +24,6 @@ export const utilityApi = {
+     return res.data.data;
+   },
+ 
+-  // Utility Charges (UTIL-006 to UTIL-013)
+   createCharge: async (data: CreateUtilityChargeRequest): Promise<UtilityCharge> => {
+     const res = await apiClient.post<ApiResponse<UtilityCharge>>('/utility-charges', data);
+     return res.data.data;
