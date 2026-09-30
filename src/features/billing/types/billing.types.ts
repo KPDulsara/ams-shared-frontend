@@ -42,7 +42,7 @@ export interface ApiErrorResponse {
 // ---------------------------------------------------------------------------
 // Charge Rules
 // ---------------------------------------------------------------------------
-export type ChargeType = 'MANAGEMENT_FEE' | 'PARKING_FEE' | 'FACILITY_FEE' | 'OTHER';
+export type ChargeType = 'MANAGEMENT_FEE' | 'PARKING_FEE' | 'FACILITY_FEE';
 export type ChargeRuleStatus = 'ACTIVE' | 'INACTIVE';
 export type BillingPeriodType = 'MONTHLY' | 'QUARTERLY';
 
